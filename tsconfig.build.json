@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "exclude": [
+    "dist",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/__tests__/**",
+    "**/test/**",
+    "jest.config.ts",
+    "jest.unit.config.ts",
+    "jest.int.config.ts",
+    "jest.e2e.config.ts",
+    "tracer.ts"
+  ]
+}

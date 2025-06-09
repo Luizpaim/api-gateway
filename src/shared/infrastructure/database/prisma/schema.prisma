@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id        String         @id @default(uuid()) @db.Uuid
+  name      String         @db.VarChar(255)
+  category  String         @db.VarChar(100)
+  users     User[]
+  urls      ShortenedUrl[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  deletedAt DateTime?
+
+  @@map("company")
+}
+
+model User {
+  id        String         @id @default(uuid()) @db.Uuid
+  companyId String         @db.Uuid
+  company   Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String         @db.VarChar(255)
+  email     String         @unique @db.VarChar(255)
+  password  String         @db.VarChar(100)
+  urls      ShortenedUrl[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  deletedAt DateTime?
+
+  @@map("user")
+}
+
+model ShortenedUrl {
+  id        String  @id @default(uuid()) @db.Uuid
+  companyId String? @db.Uuid
+  userId    String? @db.Uuid
+
+  company Company? @relation(fields: [companyId], references: [id])
+  user    User?    @relation(fields: [userId], references: [id])
+
+  shortCode   String    @unique @db.VarChar
+  shortUrl    String    @db.Text
+  longUrl     String    @db.Text
+  validSince  DateTime  @default(now())
+  validUntil  DateTime?
+  maxVisits   Int?
+  visitsTotal Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@map("shortened_url")
+}
