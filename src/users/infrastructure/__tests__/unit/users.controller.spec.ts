@@ -19,6 +19,7 @@ describe('UsersController unit tests', () => {
   let id: string
   let companyId: string
   let props: UserOutput
+  let user: { id: string; companyId: string }
 
   beforeEach(async () => {
     sut = new UsersController()
@@ -33,6 +34,11 @@ describe('UsersController unit tests', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       deletedAt: null,
+    }
+
+    user = {
+      id,
+      companyId,
     }
   })
 
@@ -86,10 +92,14 @@ describe('UsersController unit tests', () => {
     const input: UpdateUserDto = {
       name: 'new name',
     }
-    const presenter = await sut.update(id, input)
+    const presenter = await sut.update(id, input, user)
     expect(presenter).toBeInstanceOf(UserPresenter)
     expect(presenter).toStrictEqual(new UserPresenter(output))
-    expect(mockUpdateUserUseCase.execute).toHaveBeenCalledWith({ id, ...input })
+    expect(mockUpdateUserUseCase.execute).toHaveBeenCalledWith({
+      id,
+      ...input,
+      companyId: 'df96ae94-6128-486e-840c-b6f78abb4802',
+    })
   })
 
   it('should update a users password', async () => {
@@ -102,11 +112,12 @@ describe('UsersController unit tests', () => {
       password: 'new password',
       oldPassword: 'old password',
     }
-    const presenter = await sut.updatePassword(id, input)
+    const presenter = await sut.updatePassword(id, input, user)
     expect(presenter).toBeInstanceOf(UserPresenter)
     expect(presenter).toStrictEqual(new UserPresenter(output))
     expect(mockUpdatePasswordUseCase.execute).toHaveBeenCalledWith({
       id,
+      companyId: 'df96ae94-6128-486e-840c-b6f78abb4802',
       ...input,
     })
   })
@@ -117,9 +128,10 @@ describe('UsersController unit tests', () => {
       execute: jest.fn().mockReturnValue(Promise.resolve(output)),
     }
     sut['deleteUserUseCase'] = mockDeleteUserUseCase as any
-    const result = await sut.remove(id)
+    const result = await sut.remove(id, user)
     expect(output).toStrictEqual(result)
     expect(mockDeleteUserUseCase.execute).toHaveBeenCalledWith({
+      companyId: 'df96ae94-6128-486e-840c-b6f78abb4802',
       id,
     })
   })
@@ -130,11 +142,12 @@ describe('UsersController unit tests', () => {
       execute: jest.fn().mockReturnValue(Promise.resolve(output)),
     }
     sut['getUserUseCase'] = mockGetUserUseCase as any
-    const presenter = await sut.findOne(id)
+    const presenter = await sut.findOne(id, user)
     expect(presenter).toBeInstanceOf(UserPresenter)
     expect(presenter).toStrictEqual(new UserPresenter(output))
     expect(mockGetUserUseCase.execute).toHaveBeenCalledWith({
       id,
+      companyId: 'df96ae94-6128-486e-840c-b6f78abb4802',
     })
   })
 
@@ -151,10 +164,11 @@ describe('UsersController unit tests', () => {
     }
     sut['listUsersUseCase'] = mockListUsersUseCase as any
     const searchParams = {
+      companyId: 'df96ae94-6128-486e-840c-b6f78abb4802',
       page: 1,
       perPage: 1,
     }
-    const presenter = await sut.search(searchParams)
+    const presenter = await sut.search(searchParams, user)
     expect(presenter).toBeInstanceOf(UserCollectionPresenter)
     expect(presenter).toEqual(new UserCollectionPresenter(output))
     expect(mockListUsersUseCase.execute).toHaveBeenCalledWith(searchParams)

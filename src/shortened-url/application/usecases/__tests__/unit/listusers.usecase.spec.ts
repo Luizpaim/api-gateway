@@ -1,8 +1,9 @@
 import { UserInMemoryRepository } from '@/users/infrastructure/database/in-memory/repositories/user-in-memory.repository'
-import { ListUsersUseCase } from '../../listusers.usecase'
+
 import { UserRepository } from '@/users/domain/repositories/user.repository'
 import { UserEntity } from '@/users/domain/entities/user.entity'
 import { UserDataBuilder } from '@/users/domain/testing/helpers/user-data-builder'
+import { ListUsersUseCase } from '@/users/application/usecases/listusers.usecase'
 
 describe('ListUsersUseCase unit tests', () => {
   let sut: ListUsersUseCase.UseCase
@@ -61,7 +62,9 @@ describe('ListUsersUseCase unit tests', () => {
       ),
     ]
     repository.items = items
-    const output = await sut.execute({})
+    const output = await sut.execute({
+      companyId: 'df96ae94-6128-486e-840c-b6f78abb4802',
+    })
     expect(output).toStrictEqual({
       items: [...items].reverse().map(item => item.toJSON()),
       total: 2,
@@ -81,6 +84,7 @@ describe('ListUsersUseCase unit tests', () => {
     ]
     repository.items = items
     let output = await sut.execute({
+      companyId: 'df96ae94-6128-486e-840c-b6f78abb4802',
       page: 1,
       perPage: 2,
       sort: 'name',
@@ -96,6 +100,7 @@ describe('ListUsersUseCase unit tests', () => {
     })
 
     output = await sut.execute({
+      companyId: 'df96ae94-6128-486e-840c-b6f78abb4802',
       page: 2,
       perPage: 2,
       sort: 'name',
@@ -111,6 +116,7 @@ describe('ListUsersUseCase unit tests', () => {
     })
 
     output = await sut.execute({
+      companyId: 'df96ae94-6128-486e-840c-b6f78abb4802',
       page: 1,
       perPage: 3,
       sort: 'name',

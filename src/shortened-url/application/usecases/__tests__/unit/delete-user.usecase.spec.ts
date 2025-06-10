@@ -2,7 +2,7 @@ import { UserInMemoryRepository } from '@/users/infrastructure/database/in-memor
 import { NotFoundError } from '@/shared/domain/errors/not-found-error'
 import { UserEntity } from '@/users/domain/entities/user.entity'
 import { UserDataBuilder } from '@/users/domain/testing/helpers/user-data-builder'
-import { DeleteUserUseCase } from '../../delete-user.usecase'
+import { DeleteUserUseCase } from '@/users/application/usecases/delete-user.usecase'
 
 describe('DeleteUserUseCase unit tests', () => {
   let sut: DeleteUserUseCase.UseCase
@@ -14,9 +14,12 @@ describe('DeleteUserUseCase unit tests', () => {
   })
 
   it('Should throws error when entity not found', async () => {
-    await expect(() => sut.execute({ id: 'fakeId' })).rejects.toThrow(
-      new NotFoundError('Entity not found'),
-    )
+    await expect(() =>
+      sut.execute({
+        id: 'fakeId',
+        companyId: 'df96ae94-6128-486e-840c-b6f78abb4802',
+      }),
+    ).rejects.toThrow(new NotFoundError('Entity not found'))
   })
 
   it('Should delete a user', async () => {
@@ -25,7 +28,7 @@ describe('DeleteUserUseCase unit tests', () => {
     repository.items = items
 
     expect(repository.items).toHaveLength(1)
-    await sut.execute({ id: items[0]._id })
+    await sut.execute({ id: items[0]._id, companyId: items[0].companyId })
     expect(spyDelete).toHaveBeenCalledTimes(1)
     expect(repository.items).toHaveLength(0)
   })

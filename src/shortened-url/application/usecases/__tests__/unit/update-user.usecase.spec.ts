@@ -2,9 +2,9 @@ import { UserInMemoryRepository } from '@/users/infrastructure/database/in-memor
 import { NotFoundError } from '@/shared/domain/errors/not-found-error'
 import { UserEntity } from '@/users/domain/entities/user.entity'
 import { UserDataBuilder } from '@/users/domain/testing/helpers/user-data-builder'
-import { UpdateUserUseCase } from '../../update-user.usecase'
 import { BadRequestError } from '@/shared/application/errors/bad-request-error'
 import { WebsocketProvider } from '@/shared/application/providers/websocket-provider'
+import { UpdateUserUseCase } from '@/users/application/usecases/update-user.usecase'
 
 describe('UpdateUserUseCase unit tests', () => {
   let sut: UpdateUserUseCase.UseCase
@@ -25,14 +25,22 @@ describe('UpdateUserUseCase unit tests', () => {
 
   it('Should throws error when entity not found', async () => {
     await expect(() =>
-      sut.execute({ id: 'fakeId', name: 'test name' }),
+      sut.execute({
+        id: 'fakeId',
+        name: 'test name',
+        companyId: 'df96ae94-6128-486e-840c-b6f78abb4802',
+      }),
     ).rejects.toThrow(new NotFoundError('Entity not found'))
   })
 
   it('Should throws error when name not provided', async () => {
-    await expect(() => sut.execute({ id: 'fakeId', name: '' })).rejects.toThrow(
-      new BadRequestError('Name not provided'),
-    )
+    await expect(() =>
+      sut.execute({
+        id: 'fakeId',
+        name: '',
+        companyId: 'df96ae94-6128-486e-840c-b6f78abb4802',
+      }),
+    ).rejects.toThrow(new BadRequestError('Name not provided'))
   })
 
   it('Should update a user', async () => {
@@ -42,7 +50,11 @@ describe('UpdateUserUseCase unit tests', () => {
     const items = [new UserEntity(UserDataBuilder({}))]
     repository.items = items
 
-    const result = await sut.execute({ id: items[0]._id, name: 'new name' })
+    const result = await sut.execute({
+      id: items[0]._id,
+      name: 'new name',
+      companyId: items[0].companyId,
+    })
     expect(spyUpdate).toHaveBeenCalledTimes(1)
     expect(spyWebsocket).toHaveBeenCalledTimes(1)
     expect(result).toMatchObject({

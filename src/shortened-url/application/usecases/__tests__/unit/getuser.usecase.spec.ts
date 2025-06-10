@@ -1,9 +1,9 @@
 import { UserInMemoryRepository } from '@/users/infrastructure/database/in-memory/repositories/user-in-memory.repository'
-import { GetUserUseCase } from '../../getuser.usecase'
 import { NotFoundError } from '@/shared/domain/errors/not-found-error'
 import { UserEntity } from '@/users/domain/entities/user.entity'
 import { UserDataBuilder } from '@/users/domain/testing/helpers/user-data-builder'
 import { RedisCacheProvider } from '@/shared/application/providers/redis-cache.provider'
+import { GetUserUseCase } from '@/users/application/usecases/getuser.usecase'
 
 describe('GetUserUseCase unit tests', () => {
   let sut: GetUserUseCase.UseCase
@@ -23,9 +23,12 @@ describe('GetUserUseCase unit tests', () => {
   })
 
   it('Should throws error when entity not found', async () => {
-    await expect(() => sut.execute({ id: 'fakeId' })).rejects.toThrow(
-      new NotFoundError('Entity not found'),
-    )
+    await expect(() =>
+      sut.execute({
+        id: 'fakeId',
+        companyId: 'df96ae94-6128-486e-840c-b6f78abb4802',
+      }),
+    ).rejects.toThrow(new NotFoundError('Entity not found'))
   })
 
   it('Should be able to get user profile', async () => {
@@ -33,7 +36,10 @@ describe('GetUserUseCase unit tests', () => {
     const items = [new UserEntity(UserDataBuilder({}))]
     repository.items = items
 
-    const result = await sut.execute({ id: items[0]._id })
+    const result = await sut.execute({
+      id: items[0]._id,
+      companyId: items[0].companyId,
+    })
     expect(spyFindById).toHaveBeenCalledTimes(1)
     expect(result).toMatchObject({
       id: items[0].id,

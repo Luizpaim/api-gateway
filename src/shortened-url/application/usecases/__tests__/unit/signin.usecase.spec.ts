@@ -1,5 +1,4 @@
 import { UserInMemoryRepository } from '@/users/infrastructure/database/in-memory/repositories/user-in-memory.repository'
-import { SigninUseCase } from '../../signin.usecase'
 import { HashProvider } from '@/shared/application/providers/hash-provider'
 import { BcryptjsHashProvider } from '@/users/infrastructure/providers/hash-provider/bcryptjs-hash.provider'
 import { UserDataBuilder } from '@/users/domain/testing/helpers/user-data-builder'
@@ -7,6 +6,7 @@ import { BadRequestError } from '@/shared/application/errors/bad-request-error'
 import { UserEntity } from '@/users/domain/entities/user.entity'
 import { NotFoundError } from '@/shared/domain/errors/not-found-error'
 import { InvalidCredentialsError } from '@/shared/application/errors/invalid-credentials-error'
+import { SigninUseCase } from '@/users/application/usecases/signin.usecase'
 
 describe('SigninUseCase unit tests', () => {
   let sut: SigninUseCase.UseCase

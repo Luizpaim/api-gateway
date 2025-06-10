@@ -2,10 +2,10 @@ import { UserInMemoryRepository } from '@/users/infrastructure/database/in-memor
 import { NotFoundError } from '@/shared/domain/errors/not-found-error'
 import { UserEntity } from '@/users/domain/entities/user.entity'
 import { UserDataBuilder } from '@/users/domain/testing/helpers/user-data-builder'
-import { UpdatePasswordUseCase } from '../../update-password.usecase'
 import { HashProvider } from '@/shared/application/providers/hash-provider'
 import { BcryptjsHashProvider } from '@/users/infrastructure/providers/hash-provider/bcryptjs-hash.provider'
 import { InvalidPasswordError } from '@/shared/application/errors/invalid-password-error'
+import { UpdatePasswordUseCase } from '@/users/application/usecases/update-password.usecase'
 
 describe('UpdatePasswordUseCase unit tests', () => {
   let sut: UpdatePasswordUseCase.UseCase
@@ -22,6 +22,7 @@ describe('UpdatePasswordUseCase unit tests', () => {
     await expect(() =>
       sut.execute({
         id: 'fakeId',
+        companyId: 'df96ae94-6128-486e-840c-b6f78abb4802',
         password: 'test password',
         oldPassword: 'old password',
       }),
@@ -34,6 +35,7 @@ describe('UpdatePasswordUseCase unit tests', () => {
     await expect(() =>
       sut.execute({
         id: entity._id,
+        companyId: entity.companyId,
         password: 'test password',
         oldPassword: '',
       }),
@@ -48,6 +50,7 @@ describe('UpdatePasswordUseCase unit tests', () => {
     await expect(() =>
       sut.execute({
         id: entity._id,
+        companyId: entity.companyId,
         password: '',
         oldPassword: '1234',
       }),
@@ -63,6 +66,7 @@ describe('UpdatePasswordUseCase unit tests', () => {
     await expect(() =>
       sut.execute({
         id: entity._id,
+        companyId: entity.companyId,
         password: '4567',
         oldPassword: '123456',
       }),
@@ -77,6 +81,7 @@ describe('UpdatePasswordUseCase unit tests', () => {
 
     const result = await sut.execute({
       id: items[0]._id,
+      companyId: items[0].companyId,
       password: '4567',
       oldPassword: '1234',
     })
