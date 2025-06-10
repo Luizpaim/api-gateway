@@ -66,10 +66,9 @@ export class ShortenedUrlController {
     return new ShortenedUrlCollectionPresenter(output)
   }
 
-  @ApiBearerAuth()
   @ApiResponse({
-    status: 409,
-    description: 'Conflito de ShortCode',
+    status: 422,
+    description: 'Corpo da requisição com dados inválidos',
   })
   @UseGuards(OptionalAuthGuard)
   @Post()

@@ -63,31 +63,25 @@ describe('ShortenedUrlController e2e tests for CREATE', () => {
         .send(signupDto)
         .expect(201)
 
-      expect(Object.keys(res.body)).toStrictEqual([
+      expect(Object.keys(res.body.data)).toStrictEqual([
         'id',
-        'companyId',
-        'userId',
-        'longUrl',
         'shortCode',
         'shortUrl',
-        'visitsTotal',
+        'longUrl',
         'createdAt',
         'updatedAt',
-        'data',
       ])
-      expect(res.body.longUrl).toBe(signupDto.longUrl)
-      expect(res.body.shortCode).toBe(signupDto.shortCode)
+      expect(res.body.data.longUrl).toBe(signupDto.longUrl)
 
-      // confere no banco
       const entity = await prisma.shortenedUrl.findUnique({
-        where: { id: res.body.id },
+        where: { id: res.body.data.id },
       })
+
       expect(entity).toBeTruthy()
       const presenter = ShortenedUrlController.shortenedUrlToResponse(entity)
       const serialized = instanceToPlain(presenter)
-      // Checa apenas propriedades principais, ignora datas
-      expect(res.body.longUrl).toBe(serialized.longUrl)
-      expect(res.body.shortCode).toBe(serialized.shortCode)
+      expect(res.body.data.longUrl).toBe(serialized.longUrl)
+      expect(res.body.data.shortCode).toBe(serialized.shortCode)
     })
 
     it('should return 422 on invalid payload', async () => {
@@ -98,9 +92,7 @@ describe('ShortenedUrlController e2e tests for CREATE', () => {
       expect(res.body.error).toBe('Unprocessable Entity')
       expect(res.body.message).toEqual([
         'longUrl should not be empty',
-        'longUrl must be a string',
-        'shortCode should not be empty',
-        'shortCode must be a string',
+        'longUrl must be a URL address',
       ])
     })
 
@@ -113,7 +105,7 @@ describe('ShortenedUrlController e2e tests for CREATE', () => {
       expect(res.body.error).toBe('Unprocessable Entity')
       expect(res.body.message).toEqual([
         'longUrl should not be empty',
-        'longUrl must be a string',
+        'longUrl must be a URL address',
       ])
     })
 
@@ -124,26 +116,6 @@ describe('ShortenedUrlController e2e tests for CREATE', () => {
         .expect(422)
       expect(res.body.error).toBe('Unprocessable Entity')
       expect(res.body.message).toEqual(['property xpto should not exist'])
-    })
-
-    it('should return 409 on duplicated shortCode', async () => {
-      // cria no banco primeiro
-      await prisma.shortenedUrl.create({
-        data: {
-          ...signupDto,
-          shortUrl: 'http://short.ly/MYCODE123',
-          companyId: 'test-company-id',
-          userId: 'test-user-id',
-        },
-      })
-
-      const res = await request(app.getHttpServer())
-        .post('/shortened-url')
-        .send(signupDto)
-        .expect(409)
-
-      expect(res.body.statusCode).toBe(409)
-      expect(res.body.error).toBe('Conflict')
     })
   })
 })
