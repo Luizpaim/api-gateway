@@ -1,7 +1,7 @@
 import { UserRepository } from '@/users/domain/repositories/user.repository'
 import { INestApplication } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
-import { SignupDto } from '../../dtos/signup.dto'
+import { SignupUserDto } from '../../dtos/signup.dto'
 import { PrismaClient } from '@prisma/client'
 import { setupPrismaTests } from '@/shared/infrastructure/database/prisma/testing/setup-prisma-tests'
 import { EnvConfigModule } from '@/shared/infrastructure/env-config/env-config.module'
@@ -23,7 +23,7 @@ describe('UsersController e2e tests', () => {
   let module: TestingModule
 
   let repository: UserRepository.Repository
-  let signupDto: SignupDto
+  let signupDto: SignupUserDto
   let companyId: string
 
   let kafkaClient: ClientKafka

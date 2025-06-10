@@ -71,10 +71,6 @@ export class ShortenedUrlController {
     status: 409,
     description: 'Conflito de ShortCode',
   })
-  @ApiResponse({
-    status: 422,
-    description: 'Corpo da requisição com dados inválidos',
-  })
   @UseGuards(OptionalAuthGuard)
   @Post()
   async create(

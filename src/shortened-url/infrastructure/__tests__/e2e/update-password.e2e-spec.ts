@@ -10,10 +10,11 @@ import { INestApplication } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { PrismaClient } from '@prisma/client'
 import request from 'supertest'
-import { UpdatePasswordDto } from '../../dtos/update-password.dto'
-import { BcryptjsHashProvider } from '../../providers/hash-provider/bcryptjs-hash.provider'
-import { UsersModule } from '../../users.module'
+
 import { CompaniesModule } from '@/companies/infrastructure/companies.module'
+import { UpdatePasswordDto } from '@/users/infrastructure/dtos/update-password.dto'
+import { BcryptjsHashProvider } from '@/users/infrastructure/providers/hash-provider/bcryptjs-hash.provider'
+import { UsersModule } from '@/users/infrastructure/users.module'
 
 describe('UsersController e2e tests', () => {
   let app: INestApplication

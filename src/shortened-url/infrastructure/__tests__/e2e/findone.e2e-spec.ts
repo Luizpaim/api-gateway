@@ -4,17 +4,20 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { PrismaClient } from '@prisma/client'
 import { setupPrismaTests } from '@/shared/infrastructure/database/prisma/testing/setup-prisma-tests'
 import { EnvConfigModule } from '@/shared/infrastructure/env-config/env-config.module'
-import { UsersModule } from '../../users.module'
+
 import { DatabaseModule } from '@/shared/infrastructure/database/database.module'
 import request from 'supertest'
-import { UsersController } from '../../users.controller'
+
 import { instanceToPlain } from 'class-transformer'
 import { applyGlobalConfig } from '@/global-config'
 import { UserEntity } from '@/users/domain/entities/user.entity'
 import { UserDataBuilder } from '@/users/domain/testing/helpers/user-data-builder'
 import { HashProvider } from '@/shared/application/providers/hash-provider'
-import { BcryptjsHashProvider } from '../../providers/hash-provider/bcryptjs-hash.provider'
+
 import { CompaniesModule } from '@/companies/infrastructure/companies.module'
+import { UsersModule } from '@/users/infrastructure/users.module'
+import { BcryptjsHashProvider } from '@/users/infrastructure/providers/hash-provider/bcryptjs-hash.provider'
+import { UsersController } from '@/users/infrastructure/users.controller'
 
 describe('UsersController e2e tests', () => {
   let app: INestApplication

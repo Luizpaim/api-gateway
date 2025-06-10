@@ -11,10 +11,11 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { PrismaClient } from '@prisma/client'
 import { instanceToPlain } from 'class-transformer'
 import request from 'supertest'
-import { BcryptjsHashProvider } from '../../providers/hash-provider/bcryptjs-hash.provider'
-import { UsersController } from '../../users.controller'
-import { UsersModule } from '../../users.module'
+
 import { CompaniesModule } from '@/companies/infrastructure/companies.module'
+import { BcryptjsHashProvider } from '@/users/infrastructure/providers/hash-provider/bcryptjs-hash.provider'
+import { UsersController } from '@/users/infrastructure/users.controller'
+import { UsersModule } from '@/users/infrastructure/users.module'
 
 describe('UsersController e2e tests', () => {
   let app: INestApplication

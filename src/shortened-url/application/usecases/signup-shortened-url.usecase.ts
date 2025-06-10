@@ -44,8 +44,6 @@ export namespace SignupShortenedUrlUseCase {
         throw new BadRequestError('Failed to create shortened URL')
       }
 
-      console.log(shortenedUrl)
-
       const entity = new ShortenedUrlEntity(
         Object.assign({
           ...input,
