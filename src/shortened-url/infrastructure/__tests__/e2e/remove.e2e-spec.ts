@@ -14,13 +14,19 @@ import request from 'supertest'
 import { CompaniesModule } from '@/companies/infrastructure/companies.module'
 import { BcryptjsHashProvider } from '@/users/infrastructure/providers/hash-provider/bcryptjs-hash.provider'
 import { UsersModule } from '@/users/infrastructure/users.module'
+import { ShortenedUrlRepository } from '@/shortened-url/domain/repositories/shortened-url.repository'
+import { ShortenedUrlEntity } from '@/shortened-url/domain/entities/shortened-url.entity'
+import { ShortenedUrlDataBuilder } from '@/shortened-url/domain/testing/helpers/shortened-url-data-builder'
+import { ShortenedUrlModule } from '../../shortened-url.module'
 
 describe('UsersController e2e tests', () => {
   let app: INestApplication
   let module: TestingModule
 
   let repository: UserRepository.Repository
+  let repositoryShortnedUrl: ShortenedUrlRepository.Repository
   let entity: UserEntity
+  let entityShortenedUrl: ShortenedUrlEntity
   let companyId: string
 
   const prismaService = new PrismaClient()
@@ -36,13 +42,19 @@ describe('UsersController e2e tests', () => {
         EnvConfigModule,
         UsersModule,
         CompaniesModule,
+        ShortenedUrlModule,
         DatabaseModule.forTest(prismaService),
       ],
     }).compile()
     app = module.createNestApplication()
     applyGlobalConfig(app)
     await app.init()
+
     repository = module.get<UserRepository.Repository>('UserRepository')
+    repositoryShortnedUrl = module.get<ShortenedUrlRepository.Repository>(
+      'ShortenedUrlRepository',
+    )
+
     hashProvider = new BcryptjsHashProvider()
     hashPassword = await hashProvider.generateHash('1234')
   })
@@ -55,6 +67,7 @@ describe('UsersController e2e tests', () => {
 
     await prismaService.company.deleteMany()
     await prismaService.user.deleteMany()
+    await prismaService.shortenedUrl.deleteMany()
 
     const res = await request(app.getHttpServer())
       .post('/companies')
@@ -77,12 +90,21 @@ describe('UsersController e2e tests', () => {
       .send({ email: 'a@a.com', password: '1234' })
       .expect(200)
     accessToken = loginResponse.body.accessToken
+
+    entityShortenedUrl = new ShortenedUrlEntity(
+      ShortenedUrlDataBuilder({
+        userId: entity._id,
+        companyId,
+      }),
+    )
+
+    await repositoryShortnedUrl.insert(entityShortenedUrl)
   })
 
-  describe('DELETE /users/:id', () => {
+  describe('DELETE /shortened-url/:id', () => {
     it('should remove a user', async () => {
       const res = await request(app.getHttpServer())
-        .delete(`/users/${entity._id}`)
+        .delete(`/shortened-url/${entityShortenedUrl.shortCode}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(204)
         .expect({})
