@@ -3,10 +3,10 @@ import { setupPrismaTests } from '@/shared/infrastructure/database/prisma/testin
 import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/repositories/user-prisma.repository'
 import { Test, TestingModule } from '@nestjs/testing'
 import { Company, PrismaClient } from '@prisma/client'
-import { DeleteUserUseCase } from '../../delete-user.usecase'
 import { NotFoundError } from '@/shared/domain/errors/not-found-error'
 import { UserEntity } from '@/users/domain/entities/user.entity'
 import { UserDataBuilder } from '@/users/domain/testing/helpers/user-data-builder'
+import { DeleteUserUseCase } from '@/users/application/usecases/delete-user.usecase'
 
 describe('DeleteUseCase integration tests', () => {
   const prismaService = new PrismaClient()
@@ -40,9 +40,12 @@ describe('DeleteUseCase integration tests', () => {
   })
 
   it('should throws error when entity not found', async () => {
-    await expect(() => sut.execute({ id: 'fakeId' })).rejects.toThrow(
-      new NotFoundError('UserModel not found using ID fakeId'),
-    )
+    await expect(() =>
+      sut.execute({
+        id: 'fakeId',
+        companyId: 'df96ae94-6128-486e-840c-b6f78abb4802',
+      }),
+    ).rejects.toThrow(new NotFoundError('UserModel not found using ID fakeId'))
   })
 
   it('should delete a user', async () => {
@@ -55,7 +58,7 @@ describe('DeleteUseCase integration tests', () => {
     const newUser = await prismaService.user.create({
       data: entity.toJSON(),
     })
-    await sut.execute({ id: entity._id })
+    await sut.execute({ id: entity._id, companyId: entity.companyId })
 
     const output = await prismaService.user.findUnique({
       where: {
@@ -63,13 +66,11 @@ describe('DeleteUseCase integration tests', () => {
       },
     })
     expect(output.deletedAt).toBeInstanceOf(Date)
-    const models = await prismaService.user.findMany(
-      {
-        where: {
-          deletedAt: null,
-        },
+    const models = await prismaService.user.findMany({
+      where: {
+        deletedAt: null,
       },
-    )
+    })
     expect(models).toHaveLength(0)
   })
 })

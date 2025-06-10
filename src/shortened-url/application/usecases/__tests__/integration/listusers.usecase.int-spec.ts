@@ -5,7 +5,7 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { Company, PrismaClient } from '@prisma/client'
 import { UserEntity } from '@/users/domain/entities/user.entity'
 import { UserDataBuilder } from '@/users/domain/testing/helpers/user-data-builder'
-import { ListUsersUseCase } from '../../listusers.usecase'
+import { ListUsersUseCase } from '@/users/application/usecases/listusers.usecase'
 
 describe('ListUsersUseCase integration tests', () => {
   const prismaService = new PrismaClient()
@@ -62,7 +62,9 @@ describe('ListUsersUseCase integration tests', () => {
       data: entities.map(item => item.toJSON()),
     })
 
-    const output = await sut.execute({})
+    const output = await sut.execute({
+      companyId: company.id,
+    })
 
     expect(output).toStrictEqual({
       items: entities.reverse().map(item => item.toJSON()),
@@ -96,6 +98,7 @@ describe('ListUsersUseCase integration tests', () => {
 
     let output = await sut.execute({
       page: 1,
+      companyId: company.id,
       perPage: 2,
       sort: 'name',
       sortDir: 'asc',
@@ -112,6 +115,7 @@ describe('ListUsersUseCase integration tests', () => {
 
     output = await sut.execute({
       page: 2,
+      companyId: company.id,
       perPage: 2,
       sort: 'name',
       sortDir: 'asc',

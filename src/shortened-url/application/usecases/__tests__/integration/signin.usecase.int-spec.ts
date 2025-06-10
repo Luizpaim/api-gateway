@@ -8,9 +8,9 @@ import { BcryptjsHashProvider } from '@/users/infrastructure/providers/hash-prov
 import { UserEntity } from '@/users/domain/entities/user.entity'
 import { UserDataBuilder } from '@/users/domain/testing/helpers/user-data-builder'
 import { NotFoundError } from '@/shared/domain/errors/not-found-error'
-import { SigninUseCase } from '../../signin.usecase'
 import { InvalidCredentialsError } from '@/shared/application/errors/invalid-credentials-error'
 import { BadRequestError } from '@/shared/application/errors/bad-request-error'
+import { SigninUseCase } from '@/users/application/usecases/signin.usecase'
 
 describe('SigninUseCase integration tests', () => {
   const prismaService = new PrismaClient()

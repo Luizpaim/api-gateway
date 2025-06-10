@@ -6,8 +6,9 @@ import { Company, PrismaClient } from '@prisma/client'
 import { NotFoundError } from '@/shared/domain/errors/not-found-error'
 import { UserEntity } from '@/users/domain/entities/user.entity'
 import { UserDataBuilder } from '@/users/domain/testing/helpers/user-data-builder'
-import { GetUserUseCase } from '../../getuser.usecase'
+
 import { RedisCacheProvider } from '@/shared/application/providers/redis-cache.provider'
+import { GetUserUseCase } from '@/users/application/usecases/getuser.usecase'
 
 describe('GetUserUseCase integration tests', () => {
   const prismaService = new PrismaClient()
@@ -48,9 +49,12 @@ describe('GetUserUseCase integration tests', () => {
   })
 
   it('should throws error when entity not found', async () => {
-    await expect(() => sut.execute({ id: 'fakeId' })).rejects.toThrow(
-      new NotFoundError('UserModel not found using ID fakeId'),
-    )
+    await expect(() =>
+      sut.execute({
+        id: 'fakeId',
+        companyId: 'df96ae94-6128-486e-840c-b6f78abb4802',
+      }),
+    ).rejects.toThrow(new NotFoundError('UserModel not found using ID fakeId'))
   })
 
   it('should returns a user', async () => {
@@ -64,7 +68,10 @@ describe('GetUserUseCase integration tests', () => {
       data: entity.toJSON(),
     })
 
-    const output = await sut.execute({ id: entity._id })
+    const output = await sut.execute({
+      id: entity._id,
+      companyId: entity.companyId,
+    })
 
     expect(output).toMatchObject(model)
   })

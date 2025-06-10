@@ -6,8 +6,8 @@ import { Company, PrismaClient } from '@prisma/client'
 import { NotFoundError } from '@/shared/domain/errors/not-found-error'
 import { UserEntity } from '@/users/domain/entities/user.entity'
 import { UserDataBuilder } from '@/users/domain/testing/helpers/user-data-builder'
-import { UpdateUserUseCase } from '../../update-user.usecase'
 import { WebsocketProvider } from '@/shared/application/providers/websocket-provider'
+import { UpdateUserUseCase } from '@/users/application/usecases/update-user.usecase'
 
 describe('UpdateUserUseCase integration tests', () => {
   const prismaService = new PrismaClient()
@@ -48,22 +48,28 @@ describe('UpdateUserUseCase integration tests', () => {
 
   it('should throws error when entity not found', async () => {
     await expect(() =>
-      sut.execute({ id: 'fakeId', name: 'fake name' }),
+      sut.execute({ id: 'fakeId', name: 'fake name', companyId: company.id }),
     ).rejects.toThrow(new NotFoundError('UserModel not found using ID fakeId'))
   })
 
   it('should update a user', async () => {
-    const entity = new UserEntity(UserDataBuilder({
-      companyId: company.id,
-      deletedAt: null,
-    }))
+    const entity = new UserEntity(
+      UserDataBuilder({
+        companyId: company.id,
+        deletedAt: null,
+      }),
+    )
     const model = await prismaService.user.create({
       data: entity.toJSON(),
     })
 
     const spyWebsocket = jest.spyOn(websocketProvider, 'broadcastPublicMessage')
 
-    const output = await sut.execute({ id: entity._id, name: 'new name' })
+    const output = await sut.execute({
+      id: entity._id,
+      name: 'new name',
+      companyId: company.id,
+    })
     expect(spyWebsocket).toHaveBeenCalledTimes(1)
     expect(output.name).toBe('new name')
   })

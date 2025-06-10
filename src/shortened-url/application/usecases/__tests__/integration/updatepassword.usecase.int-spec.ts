@@ -5,11 +5,11 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { Company, PrismaClient } from '@prisma/client'
 import { HashProvider } from '@/shared/application/providers/hash-provider'
 import { BcryptjsHashProvider } from '@/users/infrastructure/providers/hash-provider/bcryptjs-hash.provider'
-import { UpdatePasswordUseCase } from '../../update-password.usecase'
 import { UserEntity } from '@/users/domain/entities/user.entity'
 import { UserDataBuilder } from '@/users/domain/testing/helpers/user-data-builder'
 import { NotFoundError } from '@/shared/domain/errors/not-found-error'
 import { InvalidPasswordError } from '@/shared/application/errors/invalid-password-error'
+import { UpdatePasswordUseCase } from '@/users/application/usecases/update-password.usecase'
 
 describe('UpdatePasswordUseCase integration tests', () => {
   const prismaService = new PrismaClient()
@@ -53,6 +53,7 @@ describe('UpdatePasswordUseCase integration tests', () => {
     await expect(() =>
       sut.execute({
         id: entity._id,
+        companyId: entity.companyId,
         oldPassword: 'OldPassword',
         password: 'NewPassword',
       }),
@@ -75,6 +76,7 @@ describe('UpdatePasswordUseCase integration tests', () => {
     await expect(() =>
       sut.execute({
         id: entity._id,
+        companyId: entity.companyId,
         oldPassword: '',
         password: 'NewPassword',
       }),
@@ -97,6 +99,7 @@ describe('UpdatePasswordUseCase integration tests', () => {
     await expect(() =>
       sut.execute({
         id: entity._id,
+        companyId: entity.companyId,
         oldPassword: 'OldPassword',
         password: '',
       }),
@@ -120,6 +123,7 @@ describe('UpdatePasswordUseCase integration tests', () => {
 
     const output = await sut.execute({
       id: entity._id,
+      companyId: entity.companyId,
       oldPassword: '1234',
       password: 'NewPassword',
     })

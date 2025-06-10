@@ -36,7 +36,7 @@ describe('UserPrismaRepository integration tests', () => {
   })
 
   it('should throws error when entity not found', async () => {
-    await expect(() => sut.findById('FakeId')).rejects.toThrow(
+    await expect(() => sut.findById('FakeId', company.id)).rejects.toThrow(
       new NotFoundError('UserModel not found using ID FakeId'),
     )
   })
@@ -52,7 +52,7 @@ describe('UserPrismaRepository integration tests', () => {
       data: entity.toJSON(),
     })
 
-    const output = await sut.findById(newUser.id)
+    const output = await sut.findById(newUser.id, company.id)
     expect(output.toJSON()).toStrictEqual(entity.toJSON())
   })
 
@@ -131,7 +131,7 @@ describe('UserPrismaRepository integration tests', () => {
         deletedAt: null,
       }),
     )
-    await expect(() => sut.delete(entity._id)).rejects.toThrow(
+    await expect(() => sut.delete(entity._id, company.id)).rejects.toThrow(
       new NotFoundError(`UserModel not found using ID ${entity._id}`),
     )
   })
@@ -146,7 +146,7 @@ describe('UserPrismaRepository integration tests', () => {
     const newUser = await prismaService.user.create({
       data: entity.toJSON(),
     })
-    await sut.delete(entity._id)
+    await sut.delete(entity._id, company.id)
 
     const output = await prismaService.user.findUnique({
       where: {
