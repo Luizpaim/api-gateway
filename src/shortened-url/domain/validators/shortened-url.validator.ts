@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUrl,
   IsUUID,
   MaxLength,
 } from 'class-validator'
@@ -19,7 +20,7 @@ export class ShortenedUrlRules {
   @IsOptional()
   userId?: string
 
-  @MaxLength(10)
+  @MaxLength(6)
   @IsString()
   @IsNotEmpty()
   shortCode: string
@@ -29,18 +30,9 @@ export class ShortenedUrlRules {
   @IsNotEmpty()
   shortUrl: string
 
-  @MaxLength(100)
-  @IsString()
   @IsNotEmpty()
+  @IsUrl({ require_protocol: true })
   longUrl: string
-
-  @IsDate()
-  @IsOptional()
-  validSince?: Date | null
-
-  @IsDate()
-  @IsOptional()
-  validUntil?: Date | null
 
   @IsNumber()
   @IsOptional()
@@ -68,9 +60,6 @@ export class ShortenedUrlRules {
     shortCode,
     shortUrl,
     longUrl,
-    validSince,
-    validUntil,
-    maxVisits,
     visitsTotal,
     createdAt,
     updatedAt,
@@ -81,10 +70,7 @@ export class ShortenedUrlRules {
       userId,
       shortCode,
       shortUrl,
-      longUrl,
-      validSince,
-      validUntil,
-      maxVisits,
+      longUrl: longUrl?.trim(),
       visitsTotal,
       createdAt,
       updatedAt,

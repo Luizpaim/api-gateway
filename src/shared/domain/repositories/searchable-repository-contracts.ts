@@ -5,6 +5,7 @@ export type SortDirection = 'asc' | 'desc'
 
 export type SearchProps<Filter = string> = {
   companyId?: string
+  userId?: string
   page?: number
   perPage?: number
   sort?: string | null
@@ -28,7 +29,8 @@ export class SearchParams<Filter = string> {
   protected _sort: string | null
   protected _sortDir: SortDirection | null
   protected _filter: Filter | null
-  readonly companyId: string
+  protected companyId: string
+  protected userId?: string
 
   constructor(props: SearchProps<Filter> = {}) {
     this.page = props.page
@@ -37,6 +39,7 @@ export class SearchParams<Filter = string> {
     this.sortDir = props.sortDir
     this.filter = props.filter
     this.companyId = props.companyId
+    this.userId = props.userId
   }
 
   get page() {

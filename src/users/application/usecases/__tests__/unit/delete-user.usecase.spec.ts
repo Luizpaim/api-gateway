@@ -14,18 +14,25 @@ describe('DeleteUserUseCase unit tests', () => {
   })
 
   it('Should throws error when entity not found', async () => {
-    await expect(() => sut.execute({ id: 'fakeId' })).rejects.toThrow(
-      new NotFoundError('Entity not found'),
-    )
+    await expect(() =>
+      sut.execute({ id: 'fakeId', companyId: 'e6bfa6da-8bd6-4d28-8cb3-80ed3790a294' }),
+    ).rejects.toThrow(new NotFoundError('Entity not found'))
   })
 
   it('Should delete a user', async () => {
     const spyDelete = jest.spyOn(repository, 'delete')
-    const items = [new UserEntity(UserDataBuilder({}))]
+    const items = [
+      new UserEntity(
+        UserDataBuilder({ companyId: 'e6bfa6da-8bd6-4d28-8cb3-80ed3790a294', deletedAt: new Date() }),
+      ),
+    ]
     repository.items = items
 
     expect(repository.items).toHaveLength(1)
-    await sut.execute({ id: items[0]._id })
+    await sut.execute({
+      id: items[0]._id,
+      companyId: 'company',
+    })
     expect(spyDelete).toHaveBeenCalledTimes(1)
     expect(repository.items).toHaveLength(0)
   })

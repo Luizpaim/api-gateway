@@ -9,6 +9,8 @@ import { ShortenedUrlRepository } from '@/shortened-url/domain/repositories/shor
 export namespace GetShortenedUrlUseCase {
   export type Input = {
     id: string
+    companyId: string
+    userId: string
   }
 
   export type Output = ShortenedUrlOutput
@@ -27,7 +29,11 @@ export namespace GetShortenedUrlUseCase {
 
       if (shortenedUrlCached) return shortenedUrlCached
 
-      const entity = await this.shortenedUrlRepository.findById(input.id)
+      const entity = await this.shortenedUrlRepository.findById(
+        input.id,
+        input.companyId,
+        input.userId,
+      )
 
       const shortenedUrl = ShortenedUrlOutputMapper.toOutput(entity)
 

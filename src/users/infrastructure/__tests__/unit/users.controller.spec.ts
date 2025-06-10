@@ -1,7 +1,7 @@
 import { UsersController } from '../../users.controller'
 import { UserOutput } from '@/users/application/dtos/user-output'
 import { SignupUseCase } from '@/users/application/usecases/signup.usecase'
-import { SignupDto } from '../../dtos/signup.dto'
+import { SignupUserDto } from '../../dtos/signup.dto'
 import { SigninDto } from '../../dtos/signin.dto'
 import { UpdateUserUseCase } from '@/users/application/usecases/update-user.usecase'
 import { UpdateUserDto } from '../../dtos/update-user.dto'
@@ -46,11 +46,11 @@ describe('UsersController unit tests', () => {
       execute: jest.fn().mockReturnValue(Promise.resolve(output)),
     }
     sut['signupUseCase'] = mockSignupUseCase as any
-    const input: SignupDto = {
+    const input: SignupUserDto = {
       name: 'Jhon Doe',
       email: 'a@a.com',
       password: '1234',
-      companyId
+      companyId,
     }
     const presenter = await sut.create(input)
     expect(presenter).toBeInstanceOf(UserPresenter)

@@ -34,7 +34,7 @@ import {
 } from './presenters/shortened-url.presenter'
 import { ListShortenedUrlDto } from './dtos/list-shortened-url.dto'
 import { UpdateShortenedUrlDto } from './dtos/update-shortened-url.dto'
-import { UpdateVisitsTotalDto } from './dtos/update-visits-total.dto'
+
 import { SignupShortenedUrlDto } from './dtos/signup-shortened-url.dto'
 
 @ApiTags('shortened-url')
@@ -79,13 +79,12 @@ export class ShortenedUrlController {
   @Post()
   async create(
     @Body() signupDto: SignupShortenedUrlDto,
-    @AuthUser() user: { userId: string; companyId?: string },
+    @AuthUser() user: { id: string; companyId?: string },
   ) {
-    console.log('user', user)
     const output = await this.signupShortenedUrlUseCase.execute({
       ...signupDto,
       companyId: user?.companyId,
-      userId: user?.userId,
+      userId: user?.id,
     })
     return ShortenedUrlController.shortenedUrlToResponse(output)
   }
@@ -130,8 +129,15 @@ export class ShortenedUrlController {
   })
   @UseGuards(AuthGuard)
   @Get()
-  async search(@Query() searchParams: ListShortenedUrlDto) {
-    const output = await this.listShortenedUrlUseCase.execute(searchParams)
+  async search(
+    @Query() searchParams: ListShortenedUrlDto,
+    @AuthUser() user: { id: string; companyId: string },
+  ) {
+    const output = await this.listShortenedUrlUseCase.execute({
+      ...searchParams,
+      companyId: user.companyId,
+      userId: user.id,
+    })
     return ShortenedUrlController.listShortenedUrlToResponse(output)
   }
 
@@ -146,8 +152,15 @@ export class ShortenedUrlController {
   })
   @UseGuards(AuthGuard)
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const output = await this.getShortenedUrlUseCase.execute({ id })
+  async findOne(
+    @Param('id') id: string,
+    @AuthUser() user: { id: string; companyId?: string },
+  ) {
+    const output = await this.getShortenedUrlUseCase.execute({
+      id,
+      companyId: user.companyId,
+      userId: user.id,
+    })
     return ShortenedUrlController.shortenedUrlToResponse(output)
   }
 
@@ -169,9 +182,12 @@ export class ShortenedUrlController {
   async update(
     @Param('id') id: string,
     @Body() updateShortenedUrlDto: UpdateShortenedUrlDto,
+    @AuthUser() user: { id: string; companyId?: string },
   ) {
     const output = await this.updateShortenedUrlUseCase.execute({
       id,
+      companyId: user.companyId,
+      userId: user.id,
       ...updateShortenedUrlDto,
     })
     return ShortenedUrlController.shortenedUrlToResponse(output)
@@ -194,11 +210,12 @@ export class ShortenedUrlController {
   @Patch(':id')
   async updateVisitsTotal(
     @Param('id') id: string,
-    @Body() updateVisitsTotalDto: UpdateVisitsTotalDto,
+    @AuthUser() user: { id: string; companyId?: string },
   ) {
     const output = await this.updateVisitsTotalUseCase.execute({
       id,
-      ...updateVisitsTotalDto,
+      userId: user.id,
+      companyId: user.companyId,
     })
     return ShortenedUrlController.shortenedUrlToResponse(output)
   }
@@ -219,7 +236,14 @@ export class ShortenedUrlController {
   @UseGuards(AuthGuard)
   @HttpCode(204)
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    await this.deleteShortenedUrlUseCase.execute({ id })
+  async remove(
+    @Param('id') id: string,
+    @AuthUser() user: { id: string; companyId?: string },
+  ) {
+    await this.deleteShortenedUrlUseCase.execute({
+      id,
+      companyId: user.companyId,
+      userId: user.id,
+    })
   }
 }

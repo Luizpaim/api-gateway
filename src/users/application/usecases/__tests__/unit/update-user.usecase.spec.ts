@@ -25,14 +25,22 @@ describe('UpdateUserUseCase unit tests', () => {
 
   it('Should throws error when entity not found', async () => {
     await expect(() =>
-      sut.execute({ id: 'fakeId', name: 'test name' }),
+      sut.execute({
+        id: 'fakeId',
+        name: 'test name',
+        companyId: 'e6bfa6da-8bd6-4d28-8cb3-80ed3790a294',
+      }),
     ).rejects.toThrow(new NotFoundError('Entity not found'))
   })
 
   it('Should throws error when name not provided', async () => {
-    await expect(() => sut.execute({ id: 'fakeId', name: '' })).rejects.toThrow(
-      new BadRequestError('Name not provided'),
-    )
+    await expect(() =>
+      sut.execute({
+        id: 'fakeId',
+        name: '',
+        companyId: 'e6bfa6da-8bd6-4d28-8cb3-80ed3790a294',
+      }),
+    ).rejects.toThrow(new BadRequestError('Name not provided'))
   })
 
   it('Should update a user', async () => {
@@ -42,7 +50,11 @@ describe('UpdateUserUseCase unit tests', () => {
     const items = [new UserEntity(UserDataBuilder({}))]
     repository.items = items
 
-    const result = await sut.execute({ id: items[0]._id, name: 'new name' })
+    const result = await sut.execute({
+      id: items[0]._id,
+      name: 'new name',
+      companyId: 'e6bfa6da-8bd6-4d28-8cb3-80ed3790a294',
+    })
     expect(spyUpdate).toHaveBeenCalledTimes(1)
     expect(spyWebsocket).toHaveBeenCalledTimes(1)
     expect(result).toMatchObject({

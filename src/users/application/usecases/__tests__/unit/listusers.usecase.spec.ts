@@ -61,7 +61,9 @@ describe('ListUsersUseCase unit tests', () => {
       ),
     ]
     repository.items = items
-    const output = await sut.execute({})
+    const output = await sut.execute({
+      companyId: 'e6bfa6da-8bd6-4d28-8cb3-80ed3790a294',
+    })
     expect(output).toStrictEqual({
       items: [...items].reverse().map(item => item.toJSON()),
       total: 2,
@@ -81,6 +83,7 @@ describe('ListUsersUseCase unit tests', () => {
     ]
     repository.items = items
     let output = await sut.execute({
+      companyId: 'e6bfa6da-8bd6-4d28-8cb3-80ed3790a294',
       page: 1,
       perPage: 2,
       sort: 'name',
@@ -96,6 +99,7 @@ describe('ListUsersUseCase unit tests', () => {
     })
 
     output = await sut.execute({
+      companyId: 'e6bfa6da-8bd6-4d28-8cb3-80ed3790a294',
       page: 2,
       perPage: 2,
       sort: 'name',
@@ -111,6 +115,7 @@ describe('ListUsersUseCase unit tests', () => {
     })
 
     output = await sut.execute({
+      companyId: 'e6bfa6da-8bd6-4d28-8cb3-80ed3790a294',
       page: 1,
       perPage: 3,
       sort: 'name',

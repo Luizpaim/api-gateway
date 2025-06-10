@@ -11,7 +11,10 @@ import {
 } from '../dtos/shortened-url-output'
 
 export namespace ListShortenedUrlUseCase {
-  export type Input = SearchInput
+  export type Input = SearchInput & {
+    companyId: string
+    userId: string
+  }
 
   export type Output = PaginationOutput<ShortenedUrlOutput>
 

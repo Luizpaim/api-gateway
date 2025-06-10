@@ -51,7 +51,7 @@ describe('ListUsersUseCase integration tests', () => {
       entities.push(
         new UserEntity({
           ...element,
-          companyId: company.id,
+          companyId: element.companyId,
           email: `test${index}@mail.com`,
           createdAt: new Date(createdAt.getTime() + index),
           deletedAt: null,
@@ -62,7 +62,9 @@ describe('ListUsersUseCase integration tests', () => {
       data: entities.map(item => item.toJSON()),
     })
 
-    const output = await sut.execute({})
+    const output = await sut.execute({
+      companyId: company.id,
+    })
 
     expect(output).toStrictEqual({
       items: entities.reverse().map(item => item.toJSON()),
@@ -95,6 +97,7 @@ describe('ListUsersUseCase integration tests', () => {
     })
 
     let output = await sut.execute({
+      companyId: company.id,
       page: 1,
       perPage: 2,
       sort: 'name',
@@ -111,6 +114,7 @@ describe('ListUsersUseCase integration tests', () => {
     })
 
     output = await sut.execute({
+      companyId: company.id,
       page: 2,
       perPage: 2,
       sort: 'name',

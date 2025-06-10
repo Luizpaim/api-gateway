@@ -23,9 +23,12 @@ describe('GetUserUseCase unit tests', () => {
   })
 
   it('Should throws error when entity not found', async () => {
-    await expect(() => sut.execute({ id: 'fakeId' })).rejects.toThrow(
-      new NotFoundError('Entity not found'),
-    )
+    await expect(() =>
+      sut.execute({
+        id: 'fakeId',
+        companyId: 'e6bfa6da-8bd6-4d28-8cb3-80ed3790a294',
+      }),
+    ).rejects.toThrow(new NotFoundError('Entity not found'))
   })
 
   it('Should be able to get user profile', async () => {
@@ -33,7 +36,10 @@ describe('GetUserUseCase unit tests', () => {
     const items = [new UserEntity(UserDataBuilder({}))]
     repository.items = items
 
-    const result = await sut.execute({ id: items[0]._id })
+    const result = await sut.execute({
+      id: items[0]._id,
+      companyId: items[0].companyId,
+    })
     expect(spyFindById).toHaveBeenCalledTimes(1)
     expect(result).toMatchObject({
       id: items[0].id,

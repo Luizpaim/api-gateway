@@ -23,17 +23,8 @@ export class ShortenedUrlPresenter {
   @ApiProperty({ description: 'Url encurtada' })
   shortUrl: string
 
-  @ApiProperty({ description: 'Máximo de visitas permitido para  Url' })
-  maxVisits: number
-
   @ApiProperty({ description: 'Total de visitas para  Url ' })
   visitsTotal: number
-
-  @ApiProperty({ description: 'Data inicio validade da Url' })
-  validSince: Date
-
-  @ApiProperty({ description: 'Data inicio validade da Url' })
-  validUntil: Date
 
   @ApiProperty({ description: 'Data de criação do usuário' })
   @Transform(({ value }: { value: Date }) => value.toISOString())
@@ -53,9 +44,6 @@ export class ShortenedUrlPresenter {
     this.shortCode = output.shortCode
     this.shortUrl = output.shortUrl
     this.longUrl = output.longUrl
-    this.validSince = output.validSince
-    this.validUntil = output.validUntil
-    this.maxVisits = output.maxVisits
     this.visitsTotal = output.visitsTotal
     this.createdAt = output.createdAt
     this.updatedAt = output.updatedAt

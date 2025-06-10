@@ -53,6 +53,7 @@ describe('UpdatePasswordUseCase integration tests', () => {
     await expect(() =>
       sut.execute({
         id: entity._id,
+        companyId: entity.companyId,
         oldPassword: 'OldPassword',
         password: 'NewPassword',
       }),
@@ -75,6 +76,7 @@ describe('UpdatePasswordUseCase integration tests', () => {
     await expect(() =>
       sut.execute({
         id: entity._id,
+        companyId: entity.companyId,
         oldPassword: '',
         password: 'NewPassword',
       }),
@@ -98,6 +100,7 @@ describe('UpdatePasswordUseCase integration tests', () => {
       sut.execute({
         id: entity._id,
         oldPassword: 'OldPassword',
+        companyId: entity.companyId,
         password: '',
       }),
     ).rejects.toThrow(
@@ -121,6 +124,7 @@ describe('UpdatePasswordUseCase integration tests', () => {
     const output = await sut.execute({
       id: entity._id,
       oldPassword: '1234',
+      companyId: entity.companyId,
       password: 'NewPassword',
     })
 

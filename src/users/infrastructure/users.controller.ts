@@ -160,7 +160,7 @@ export class UsersController {
   @Get()
   async search(
     @Query() searchParams: ListUsersDto,
-    @AuthUser() user: { userId: string; companyId?: string },
+    @AuthUser() user: { id: string; companyId?: string },
   ) {
     const output = await this.listUsersUseCase.execute({
       ...searchParams,
@@ -182,7 +182,7 @@ export class UsersController {
   @Get(':id')
   async findOne(
     @Param('id') id: string,
-    @AuthUser() user: { userId: string; companyId?: string },
+    @AuthUser() user: { id: string; companyId?: string },
   ) {
     const output = await this.getUserUseCase.execute({
       id,
@@ -209,7 +209,7 @@ export class UsersController {
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
-    @AuthUser() user: { userId: string; companyId?: string },
+    @AuthUser() user: { id: string; companyId?: string },
   ) {
     const output = await this.updateUserUseCase.execute({
       id,
@@ -237,7 +237,7 @@ export class UsersController {
   async updatePassword(
     @Param('id') id: string,
     @Body() updatePasswordDto: UpdatePasswordDto,
-    @AuthUser() user: { userId: string; companyId?: string },
+    @AuthUser() user: { id: string; companyId?: string },
   ) {
     const output = await this.updatePasswordUseCase.execute({
       id,
@@ -265,7 +265,7 @@ export class UsersController {
   @Delete(':id')
   async remove(
     @Param('id') id: string,
-    @AuthUser() user: { userId: string; companyId?: string },
+    @AuthUser() user: { id: string; companyId?: string },
   ) {
     await this.deleteUserUseCase.execute({ id, companyId: user.companyId })
   }

@@ -4,7 +4,9 @@ import { ListShortenedUrlUseCase } from '@/shortened-url/application/usecases/li
 import { ApiPropertyOptional } from '@nestjs/swagger'
 import { IsOptional } from 'class-validator'
 
-export class ListShortenedUrlDto implements ListShortenedUrlUseCase.Input {
+export class ListShortenedUrlDto
+  implements Omit<ListShortenedUrlUseCase.Input, 'companyId' | 'userId'>
+{
   @ApiPropertyOptional({ description: 'Página que será retornada' })
   @IsOptional()
   page?: number

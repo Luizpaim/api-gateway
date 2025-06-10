@@ -8,7 +8,7 @@ export class OptionalAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest()
     const token = this.extractTokenFromHeader(request)
-    console.log('OptionalAuthGuard: token', token)
+
     if (token) {
       try {
         request['user'] = await this.authService.verifyJwt(token)

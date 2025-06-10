@@ -21,6 +21,7 @@ describe('UpdatePasswordUseCase unit tests', () => {
   it('Should throws error when entity not found', async () => {
     await expect(() =>
       sut.execute({
+        companyId: 'e6bfa6da-8bd6-4d28-8cb3-80ed3790a294',
         id: 'fakeId',
         password: 'test password',
         oldPassword: 'old password',
@@ -33,6 +34,7 @@ describe('UpdatePasswordUseCase unit tests', () => {
     repository.items = [entity]
     await expect(() =>
       sut.execute({
+        companyId: entity.companyId,
         id: entity._id,
         password: 'test password',
         oldPassword: '',
@@ -47,6 +49,7 @@ describe('UpdatePasswordUseCase unit tests', () => {
     repository.items = [entity]
     await expect(() =>
       sut.execute({
+        companyId: entity.companyId,
         id: entity._id,
         password: '',
         oldPassword: '1234',
@@ -62,6 +65,7 @@ describe('UpdatePasswordUseCase unit tests', () => {
     repository.items = [entity]
     await expect(() =>
       sut.execute({
+        companyId: entity.companyId,
         id: entity._id,
         password: '4567',
         oldPassword: '123456',
@@ -76,6 +80,7 @@ describe('UpdatePasswordUseCase unit tests', () => {
     repository.items = items
 
     const result = await sut.execute({
+      companyId: items[0].companyId,
       id: items[0]._id,
       password: '4567',
       oldPassword: '1234',

@@ -8,9 +8,6 @@ export type ShortenedUrlProps = {
   shortCode: string
   shortUrl: string
   longUrl: string
-  validSince?: Date
-  validUntil?: Date
-  maxVisits?: number
   visitsTotal?: number
   createdAt?: Date
   updatedAt?: Date
@@ -46,18 +43,6 @@ export class ShortenedUrlEntity extends Entity<ShortenedUrlProps> {
 
   get longUrl() {
     return this.props.longUrl
-  }
-
-  get validSince() {
-    return this.props.validSince
-  }
-
-  get validUntil() {
-    return this.props.validUntil
-  }
-
-  get maxVisits() {
-    return this.props.maxVisits
   }
 
   get visitsTotal() {
@@ -96,18 +81,6 @@ export class ShortenedUrlEntity extends Entity<ShortenedUrlProps> {
     this.props.longUrl = value
   }
 
-  private set validSince(value: Date) {
-    this.props.validSince = value
-  }
-
-  private set validUntil(value: Date) {
-    this.props.validUntil = value
-  }
-
-  private set maxVisits(value: number) {
-    this.props.maxVisits = value
-  }
-
   private set visitsTotal(value: number) {
     this.props.visitsTotal = value
   }
@@ -127,9 +100,6 @@ export class ShortenedUrlEntity extends Entity<ShortenedUrlProps> {
       shortCode: (v: string) => (this.shortCode = v),
       shortUrl: (v: string) => (this.shortUrl = v),
       longUrl: (v: string) => (this.longUrl = v),
-      validSince: (v: Date) => (this.validSince = v),
-      validUntil: (v: Date) => (this.validUntil = v),
-      maxVisits: (v: number) => (this.maxVisits = v),
       visitsTotal: (v: number) => (this.visitsTotal = v),
       deletedAt: (v: Date) => (this.deletedAt = v),
     }

@@ -8,7 +8,10 @@ import { ShortenedUrlEntity } from '../entities/shortened-url.entity'
 export namespace ShortenedUrlRepository {
   export type Filter = string
 
-  export class SearchParams extends DefaultSearchParams<Filter> {}
+  export class SearchParams extends DefaultSearchParams<Filter> {
+    companyId: string
+    userId: string
+  }
 
   export class SearchResult extends DefaultSearchResult<
     ShortenedUrlEntity,

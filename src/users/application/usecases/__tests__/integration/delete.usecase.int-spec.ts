@@ -40,9 +40,12 @@ describe('DeleteUseCase integration tests', () => {
   })
 
   it('should throws error when entity not found', async () => {
-    await expect(() => sut.execute({ id: 'fakeId' })).rejects.toThrow(
-      new NotFoundError('UserModel not found using ID fakeId'),
-    )
+    await expect(() =>
+      sut.execute({
+        id: 'fakeId',
+        companyId: 'e6bfa6da-8bd6-4d28-8cb3-80ed3790a294',
+      }),
+    ).rejects.toThrow(new NotFoundError('UserModel not found using ID fakeId'))
   })
 
   it('should delete a user', async () => {
@@ -55,7 +58,7 @@ describe('DeleteUseCase integration tests', () => {
     const newUser = await prismaService.user.create({
       data: entity.toJSON(),
     })
-    await sut.execute({ id: entity._id })
+    await sut.execute({ id: entity._id, companyId: entity.companyId })
 
     const output = await prismaService.user.findUnique({
       where: {
@@ -63,13 +66,11 @@ describe('DeleteUseCase integration tests', () => {
       },
     })
     expect(output.deletedAt).toBeInstanceOf(Date)
-    const models = await prismaService.user.findMany(
-      {
-        where: {
-          deletedAt: null,
-        },
+    const models = await prismaService.user.findMany({
+      where: {
+        deletedAt: null,
       },
-    )
+    })
     expect(models).toHaveLength(0)
   })
 })

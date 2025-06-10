@@ -48,9 +48,12 @@ describe('GetUserUseCase integration tests', () => {
   })
 
   it('should throws error when entity not found', async () => {
-    await expect(() => sut.execute({ id: 'fakeId' })).rejects.toThrow(
-      new NotFoundError('UserModel not found using ID fakeId'),
-    )
+    await expect(() =>
+      sut.execute({
+        id: 'fakeId',
+        companyId: 'e6bfa6da-8bd6-4d28-8cb3-80ed3790a294',
+      }),
+    ).rejects.toThrow(new NotFoundError('UserModel not found using ID fakeId'))
   })
 
   it('should returns a user', async () => {
@@ -64,7 +67,10 @@ describe('GetUserUseCase integration tests', () => {
       data: entity.toJSON(),
     })
 
-    const output = await sut.execute({ id: entity._id })
+    const output = await sut.execute({
+      id: entity._id,
+      companyId: entity.companyId,
+    })
 
     expect(output).toMatchObject(model)
   })

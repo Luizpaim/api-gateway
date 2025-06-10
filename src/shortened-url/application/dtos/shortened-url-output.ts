@@ -7,9 +7,6 @@ export type ShortenedUrlOutput = {
   shortCode: string
   shortUrl: string
   longUrl: string
-  validSince?: Date
-  validUntil?: Date
-  maxVisits?: number
   visitsTotal?: number
   createdAt?: Date
   updatedAt?: Date

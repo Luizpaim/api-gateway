@@ -4,6 +4,7 @@ import { ConflictError } from '@/shared/domain/errors/conflict-error'
 import { ShortenedUrlEntity } from '@/shortened-url/domain/entities/shortened-url.entity'
 import { ShortenedUrlRepository } from '@/shortened-url/domain/repositories/shortened-url.repository'
 import { ShortenedUrlModelMapper } from '../models/shortened-url-model.mapper'
+import { Prisma } from '@prisma/client'
 
 export class ShortenedUrlPrismaRepository
   implements ShortenedUrlRepository.Repository
@@ -27,27 +28,23 @@ export class ShortenedUrlPrismaRepository
     const sortable = this.sortableFields?.includes(props.sort) || false
     const orderByField = sortable ? props.sort : 'createdAt'
     const orderByDir = sortable ? props.sortDir : 'desc'
-    console.log('search props', props)
-    const count = await this.prismaService.shortenedUrl.count({
+
+    const where: Prisma.ShortenedUrlWhereInput = {
+      companyId: props.companyId,
+      userId: props.userId,
+      deletedAt: null,
       ...(props.filter && {
-        where: {
-          shortUrl: {
-            contains: props.filter,
-            mode: 'insensitive',
-          },
+        shortUrl: {
+          contains: props.filter,
+          mode: Prisma.QueryMode.insensitive,
         },
       }),
-    })
+    }
+
+    const count = await this.prismaService.shortenedUrl.count({ where })
 
     const models = await this.prismaService.shortenedUrl.findMany({
-      ...(props.filter && {
-        where: {
-          shortUrl: {
-            contains: props.filter,
-            mode: 'insensitive',
-          },
-        },
-      }),
+      where,
       orderBy: {
         [orderByField]: orderByDir,
       },
@@ -72,8 +69,12 @@ export class ShortenedUrlPrismaRepository
     })
   }
 
-  findById(id: string): Promise<ShortenedUrlEntity> {
-    return this._get(id)
+  findById(
+    id: string,
+    companyId: string,
+    userId: string,
+  ): Promise<ShortenedUrlEntity> {
+    return this._get({ id, companyId, userId })
   }
 
   async findAll(): Promise<ShortenedUrlEntity[]> {
@@ -82,7 +83,11 @@ export class ShortenedUrlPrismaRepository
   }
 
   async update(entity: ShortenedUrlEntity): Promise<void> {
-    await this._get(entity._id)
+    await this._get({
+      id: entity._id,
+      companyId: entity.companyId,
+      userId: entity.userId,
+    })
     await this.prismaService.shortenedUrl.update({
       data: entity.toJSON(),
       where: {
@@ -91,24 +96,38 @@ export class ShortenedUrlPrismaRepository
     })
   }
 
-  async delete(id: string): Promise<void> {
-    await this._get(id)
+  async delete(id: string, companyId: string, userId: string): Promise<void> {
+    await this._get({ id, companyId, userId })
     await this.prismaService.shortenedUrl.update({
       data: {
         deletedAt: new Date(),
       },
-      where: { id },
+      where: { id, companyId, userId },
     })
   }
 
-  protected async _get(id: string): Promise<ShortenedUrlEntity> {
+  protected async _get({
+    id,
+    companyId,
+    userId,
+  }: {
+    id: string
+    companyId: string
+    userId: string
+  }): Promise<ShortenedUrlEntity> {
     try {
       const user = await this.prismaService.shortenedUrl.findUnique({
-        where: { id },
+        where: { id, companyId, userId, deletedAt: null },
       })
       return ShortenedUrlModelMapper.toEntity(user)
     } catch {
       throw new NotFoundError(`ShortenedUrlModel not found using ID ${id}`)
     }
+  }
+
+  async runInTransaction<T>(fn: () => Promise<T>): Promise<T> {
+    return this.prismaService.$transaction(async () => {
+      return fn()
+    })
   }
 }

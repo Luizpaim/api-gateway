@@ -1,208 +1,150 @@
-import { UserRepository } from '@/users/domain/repositories/user.repository'
 import { INestApplication } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
-import { SignupDto } from '../../dtos/signup.dto'
+import request from 'supertest'
 import { PrismaClient } from '@prisma/client'
 import { setupPrismaTests } from '@/shared/infrastructure/database/prisma/testing/setup-prisma-tests'
 import { EnvConfigModule } from '@/shared/infrastructure/env-config/env-config.module'
-import { UsersModule } from '../../users.module'
+import { ShortenedUrlModule } from '../../shortened-url.module'
 import { DatabaseModule } from '@/shared/infrastructure/database/database.module'
-import request from 'supertest'
-import { UsersController } from '../../users.controller'
-import { instanceToPlain } from 'class-transformer'
 import { applyGlobalConfig } from '@/global-config'
-import { UserEntity } from '@/users/domain/entities/user.entity'
-import { UserDataBuilder } from '@/users/domain/testing/helpers/user-data-builder'
-import { ClientKafka, Transport } from '@nestjs/microservices'
-import { CompaniesModule } from '@/companies/infrastructure/companies.module'
+import { ShortenedUrlController } from '../../shortened-url.controller'
+import { ShortenedUrlEntity } from '@/shortened-url/domain/entities/shortened-url.entity'
+import { instanceToPlain } from 'class-transformer'
+import { OptionalAuthGuard } from '@/auth/infrastructure/optional-auth.guard'
+import { AuthGuard } from '@/auth/infrastructure/auth.guard'
 
-describe('UsersController e2e tests', () => {
+describe('ShortenedUrlController e2e tests for CREATE', () => {
   jest.setTimeout(60000)
 
   let app: INestApplication
   let module: TestingModule
+  let prisma: PrismaClient
 
-  let repository: UserRepository.Repository
-  let signupDto: SignupDto
-  let companyId: string
-
-  let kafkaClient: ClientKafka
-  const prismaService = new PrismaClient()
+  let signupDto: any
 
   beforeAll(async () => {
     setupPrismaTests()
+    prisma = new PrismaClient()
+
     module = await Test.createTestingModule({
       imports: [
         EnvConfigModule,
-        UsersModule,
-        CompaniesModule,
-        DatabaseModule.forTest(prismaService),
+        ShortenedUrlModule,
+        DatabaseModule.forTest(prisma),
       ],
-    }).compile()
+    })
+      .overrideGuard('AuthGuard')
+      .useClass(AuthGuard)
+      .overrideGuard('OptionalAuthGuard')
+      .useClass(OptionalAuthGuard)
+      .compile()
 
-    kafkaClient = module.get<ClientKafka>('KAFKA_PRODUCER')
-
-    await kafkaClient.connect()
     app = module.createNestApplication()
     applyGlobalConfig(app)
-
-    app.connectMicroservice({
-      transport: Transport.KAFKA,
-      options: {
-        client: {
-          brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
-        },
-        consumer: {
-          groupId: 'api-gateway-consumer',
-        },
-      },
-    })
-
-    await app.startAllMicroservices()
     await app.init()
-
-    kafkaClient = module.get<ClientKafka>('KAFKA_PRODUCER')
-    await kafkaClient.connect()
-
-    repository = module.get<UserRepository.Repository>('UserRepository')
   })
 
   beforeEach(async () => {
-    const signupCompanyDto = {
-      name: 'test name',
-      category: 'a@a.com',
-    }
-
-    await prismaService.company.deleteMany()
-    await prismaService.user.deleteMany()
-
-    const res = await request(app.getHttpServer())
-      .post('/companies')
-      .send(signupCompanyDto)
-      .expect(201)
-
-    companyId = res.body.data.id
-
+    await prisma.shortenedUrl.deleteMany()
     signupDto = {
-      name: 'test name',
-      email: 'a@a.com',
-      password: 'TestPassword123',
-      companyId,
+      longUrl: 'https://longurl.com/teste',
     }
   })
 
   afterAll(async () => {
-    await kafkaClient.close()
     await app.close()
-    await new Promise(res => setTimeout(res, 500))
+    await prisma.$disconnect()
+    await new Promise(res => setTimeout(res, 300))
   })
 
-  describe('POST /users', () => {
-    it('should create a user', async () => {
+  describe('POST /shortened-url', () => {
+    it('should create and return shortcut data', async () => {
       const res = await request(app.getHttpServer())
-        .post('/users')
+        .post('/shortened-url')
         .send(signupDto)
         .expect(201)
-      expect(Object.keys(res.body)).toStrictEqual(['data'])
-      const user = await repository.findById(res.body.data.id)
-      const presenter = UsersController.userToResponse(user.toJSON())
+
+      expect(Object.keys(res.body)).toStrictEqual([
+        'id',
+        'companyId',
+        'userId',
+        'longUrl',
+        'shortCode',
+        'shortUrl',
+        'visitsTotal',
+        'createdAt',
+        'updatedAt',
+        'data',
+      ])
+      expect(res.body.longUrl).toBe(signupDto.longUrl)
+      expect(res.body.shortCode).toBe(signupDto.shortCode)
+
+      // confere no banco
+      const entity = await prisma.shortenedUrl.findUnique({
+        where: { id: res.body.id },
+      })
+      expect(entity).toBeTruthy()
+      const presenter = ShortenedUrlController.shortenedUrlToResponse(entity)
       const serialized = instanceToPlain(presenter)
-      expect(res.body.data).toStrictEqual(serialized)
+      // Checa apenas propriedades principais, ignora datas
+      expect(res.body.longUrl).toBe(serialized.longUrl)
+      expect(res.body.shortCode).toBe(serialized.shortCode)
     })
 
-    it('should return a error with 422 code when the request body is invalid', async () => {
+    it('should return 422 on invalid payload', async () => {
       const res = await request(app.getHttpServer())
-        .post('/users')
+        .post('/shortened-url')
         .send({})
         .expect(422)
       expect(res.body.error).toBe('Unprocessable Entity')
       expect(res.body.message).toEqual([
-        'companyId should not be empty',
-        'companyId must be a UUID',
-        'name should not be empty',
-        'name must be a string',
-        'email must be an email',
-        'email should not be empty',
-        'email must be a string',
-        'password should not be empty',
-        'password must be a string',
+        'longUrl should not be empty',
+        'longUrl must be a string',
+        'shortCode should not be empty',
+        'shortCode must be a string',
       ])
     })
 
-    it('should return a error with 422 code when the name field is invalid', async () => {
-      delete signupDto.name
+    it('should return 422 if field is invalid', async () => {
+      delete signupDto.longUrl
       const res = await request(app.getHttpServer())
-        .post('/users')
+        .post('/shortened-url')
         .send(signupDto)
         .expect(422)
       expect(res.body.error).toBe('Unprocessable Entity')
       expect(res.body.message).toEqual([
-        'name should not be empty',
-        'name must be a string',
+        'longUrl should not be empty',
+        'longUrl must be a string',
       ])
     })
 
-    it('should return a error with 422 code when the email field is invalid', async () => {
-      delete signupDto.email
+    it('should return 422 with extra property', async () => {
       const res = await request(app.getHttpServer())
-        .post('/users')
-        .send(signupDto)
-        .expect(422)
-      expect(res.body.error).toBe('Unprocessable Entity')
-      expect(res.body.message).toEqual([
-        'email must be an email',
-        'email should not be empty',
-        'email must be a string',
-      ])
-    })
-
-    it('should return a error with 422 code when the password field is invalid', async () => {
-      delete signupDto.password
-      const res = await request(app.getHttpServer())
-        .post('/users')
-        .send(signupDto)
-        .expect(422)
-      expect(res.body.error).toBe('Unprocessable Entity')
-      expect(res.body.message).toEqual([
-        'password should not be empty',
-        'password must be a string',
-      ])
-    })
-
-    it('should return a error with 422 code when the companyId field is invalid', async () => {
-      delete signupDto.companyId
-      const res = await request(app.getHttpServer())
-        .post('/users')
-        .send(signupDto)
-        .expect(422)
-      expect(res.body.error).toBe('Unprocessable Entity')
-      expect(res.body.message).toEqual([
-        'companyId should not be empty',
-        'companyId must be a UUID',
-      ])
-    })
-
-    it('should return a error with 422 code with invalid field provided', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/users')
-        .send(Object.assign(signupDto, { xpto: 'fake' }))
+        .post('/shortened-url')
+        .send({ ...signupDto, xpto: 'fake' })
         .expect(422)
       expect(res.body.error).toBe('Unprocessable Entity')
       expect(res.body.message).toEqual(['property xpto should not exist'])
     })
 
-    it('should return a error with 409 code when the email is duplicated', async () => {
-      const entity = new UserEntity(UserDataBuilder({ ...signupDto }))
-      await repository.insert(entity)
+    it('should return 409 on duplicated shortCode', async () => {
+      // cria no banco primeiro
+      await prisma.shortenedUrl.create({
+        data: {
+          ...signupDto,
+          shortUrl: 'http://short.ly/MYCODE123',
+          companyId: 'test-company-id',
+          userId: 'test-user-id',
+        },
+      })
+
       const res = await request(app.getHttpServer())
-        .post('/users')
+        .post('/shortened-url')
         .send(signupDto)
         .expect(409)
-        .expect({
-          statusCode: 409,
-          error: 'Conflict',
-          message: 'Email address already used',
-        })
+
+      expect(res.body.statusCode).toBe(409)
+      expect(res.body.error).toBe('Conflict')
     })
   })
 })

@@ -14,14 +14,27 @@ import { ListShortenedUrlUseCase } from '../application/usecases/list-shortened-
 import { UpdateShortenedUrlUseCase } from '../application/usecases/update-shortened-url.usecase'
 import { UpdateVisitsTotalUseCase } from '../application/usecases/update-visits-total.usecase'
 import { DeleteShortenedUrlUseCase } from '../application/usecases/delete-shortened-url.usecase'
+import { ShortenedUrlProvider } from './providers/shortened-url-shlink.provider'
+import { ShortenedUrlShlinkProvider } from '@/shared/application/providers/shortened-url-shlink.provider'
+import { HttpModule } from '@nestjs/axios'
 
 @Module({
-  imports: [AuthModule, UsersModule, CompaniesModule, RedisCacheModule],
+  imports: [
+    AuthModule,
+    UsersModule,
+    CompaniesModule,
+    RedisCacheModule,
+    HttpModule,
+  ],
   controllers: [ShortenedUrlController],
   providers: [
     {
       provide: 'PrismaService',
       useClass: PrismaService,
+    },
+    {
+      provide: 'ShortenedUrlShlinkProvider',
+      useClass: ShortenedUrlProvider,
     },
     {
       provide: 'ShortenedUrlRepository',
@@ -34,10 +47,14 @@ import { DeleteShortenedUrlUseCase } from '../application/usecases/delete-shorte
       provide: SignupShortenedUrlUseCase.UseCase,
       useFactory: (
         shortenedUrlRepository: ShortenedUrlRepository.Repository,
+        shortenedUrlShlinkProvider: ShortenedUrlShlinkProvider,
       ) => {
-        return new SignupShortenedUrlUseCase.UseCase(shortenedUrlRepository)
+        return new SignupShortenedUrlUseCase.UseCase(
+          shortenedUrlRepository,
+          shortenedUrlShlinkProvider,
+        )
       },
-      inject: ['ShortenedUrlRepository'],
+      inject: ['ShortenedUrlRepository', 'ShortenedUrlShlinkProvider'],
     },
 
     {
@@ -66,28 +83,40 @@ import { DeleteShortenedUrlUseCase } from '../application/usecases/delete-shorte
       provide: UpdateShortenedUrlUseCase.UseCase,
       useFactory: (
         shortenedUrlRepository: ShortenedUrlRepository.Repository,
+        shortenedUrlShlinkProvider: ShortenedUrlShlinkProvider,
       ) => {
-        return new UpdateShortenedUrlUseCase.UseCase(shortenedUrlRepository)
+        return new UpdateShortenedUrlUseCase.UseCase(
+          shortenedUrlRepository,
+          shortenedUrlShlinkProvider,
+        )
       },
-      inject: ['ShortenedUrlRepository'],
+      inject: ['ShortenedUrlRepository', 'ShortenedUrlShlinkProvider'],
     },
     {
       provide: UpdateVisitsTotalUseCase.UseCase,
       useFactory: (
         shortenedUrlRepository: ShortenedUrlRepository.Repository,
+        shortenedUrlShlinkProvider: ShortenedUrlShlinkProvider,
       ) => {
-        return new UpdateVisitsTotalUseCase.UseCase(shortenedUrlRepository)
+        return new UpdateVisitsTotalUseCase.UseCase(
+          shortenedUrlRepository,
+          shortenedUrlShlinkProvider,
+        )
       },
-      inject: ['ShortenedUrlRepository'],
+      inject: ['ShortenedUrlRepository', 'ShortenedUrlShlinkProvider'],
     },
     {
       provide: DeleteShortenedUrlUseCase.UseCase,
       useFactory: (
         shortenedUrlRepository: ShortenedUrlRepository.Repository,
+        shortenedUrlShlinkProvider: ShortenedUrlShlinkProvider,
       ) => {
-        return new DeleteShortenedUrlUseCase.UseCase(shortenedUrlRepository)
+        return new DeleteShortenedUrlUseCase.UseCase(
+          shortenedUrlRepository,
+          shortenedUrlShlinkProvider,
+        )
       },
-      inject: ['ShortenedUrlRepository'],
+      inject: ['ShortenedUrlRepository', 'ShortenedUrlShlinkProvider'],
     },
   ],
 })
