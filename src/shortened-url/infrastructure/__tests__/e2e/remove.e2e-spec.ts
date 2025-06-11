@@ -25,7 +25,6 @@ describe('ShortenedUrlController e2e tests', () => {
   let companyId: string
   let resShortenedUrl: Record<string, any>
   const prismaService = new PrismaClient()
-
   let hashProvider: HashProvider
   let hashPassword: string
   let accessToken: string

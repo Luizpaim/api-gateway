@@ -190,10 +190,6 @@ export class ShortenedUrlController {
 
   @ApiBearerAuth()
   @ApiResponse({
-    status: 422,
-    description: 'Corpo da requisição com dados inválidos',
-  })
-  @ApiResponse({
     status: 404,
     description: 'Id não encontrado',
   })
