@@ -10,25 +10,20 @@ import { INestApplication } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { PrismaClient } from '@prisma/client'
 import request from 'supertest'
-
 import { CompaniesModule } from '@/companies/infrastructure/companies.module'
 import { BcryptjsHashProvider } from '@/users/infrastructure/providers/hash-provider/bcryptjs-hash.provider'
 import { UsersModule } from '@/users/infrastructure/users.module'
-import { ShortenedUrlRepository } from '@/shortened-url/domain/repositories/shortened-url.repository'
-import { ShortenedUrlEntity } from '@/shortened-url/domain/entities/shortened-url.entity'
-import { ShortenedUrlDataBuilder } from '@/shortened-url/domain/testing/helpers/shortened-url-data-builder'
 import { ShortenedUrlModule } from '../../shortened-url.module'
 
-describe('UsersController e2e tests', () => {
+import { v4 as uuidv4 } from 'uuid'
+
+describe('ShortenedUrlController e2e tests', () => {
   let app: INestApplication
   let module: TestingModule
-
   let repository: UserRepository.Repository
-  let repositoryShortnedUrl: ShortenedUrlRepository.Repository
   let entity: UserEntity
-  let entityShortenedUrl: ShortenedUrlEntity
   let companyId: string
-
+  let resShortenedUrl: Record<string, any>
   const prismaService = new PrismaClient()
 
   let hashProvider: HashProvider
@@ -37,23 +32,22 @@ describe('UsersController e2e tests', () => {
 
   beforeAll(async () => {
     setupPrismaTests()
+
     module = await Test.createTestingModule({
       imports: [
         EnvConfigModule,
+        ShortenedUrlModule,
         UsersModule,
         CompaniesModule,
-        ShortenedUrlModule,
         DatabaseModule.forTest(prismaService),
       ],
     }).compile()
     app = module.createNestApplication()
     applyGlobalConfig(app)
+
     await app.init()
 
     repository = module.get<UserRepository.Repository>('UserRepository')
-    repositoryShortnedUrl = module.get<ShortenedUrlRepository.Repository>(
-      'ShortenedUrlRepository',
-    )
 
     hashProvider = new BcryptjsHashProvider()
     hashPassword = await hashProvider.generateHash('1234')
@@ -90,46 +84,52 @@ describe('UsersController e2e tests', () => {
       .send({ email: 'a@a.com', password: '1234' })
       .expect(200)
     accessToken = loginResponse.body.accessToken
-
-    entityShortenedUrl = new ShortenedUrlEntity(
-      ShortenedUrlDataBuilder({
-        userId: entity._id,
-        companyId,
-      }),
-    )
-
-    await repositoryShortnedUrl.insert(entityShortenedUrl)
   })
 
   describe('DELETE /shortened-url/:id', () => {
-    it('should remove a user', async () => {
+    it('should return a error with 401 code when the request is not authorized', async () => {
       const res = await request(app.getHttpServer())
-        .delete(`/shortened-url/${entityShortenedUrl.shortCode}`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(204)
-        .expect({})
+        .delete('/shortened-url/baa2e7bc-de38-4d7c-bd57-1dbaa226ca4e')
+        .expect(401)
+
+      expect(res.body).toEqual(
+        expect.objectContaining({
+          statusCode: 401,
+          message: 'Unauthorized',
+        }),
+      )
     })
 
     it('should return a error with 404 code when throw NotFoundError with invalid id', async () => {
+      const nonExistentId = uuidv4()
       const res = await request(app.getHttpServer())
-        .delete('/users/fakeId')
+        .delete(`/shortened-url/${nonExistentId}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(404)
-        .expect({
+
+      expect(res.body).toEqual(
+        expect.objectContaining({
           statusCode: 404,
           error: 'Not Found',
-          message: 'UserModel not found using ID fakeId',
-        })
+        }),
+      )
+      expect(res.body.message).toMatch(/^ShortenedUrlModel not found using ID/)
     })
 
-    it('should return a error with 401 code when the request is not authorized', async () => {
-      const res = await request(app.getHttpServer())
-        .delete('/users/fakeId')
-        .expect(401)
-        .expect({
-          statusCode: 401,
-          message: 'Unauthorized',
+    it('should remove a user', async () => {
+      resShortenedUrl = await request(app.getHttpServer())
+        .post('/shortened-url')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          longUrl: 'https://longurl.com/teste',
         })
+        .expect(201)
+
+      const res = await request(app.getHttpServer())
+        .delete(`/shortened-url/${resShortenedUrl.body.data.id}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(204)
+        .expect({})
     })
   })
 })

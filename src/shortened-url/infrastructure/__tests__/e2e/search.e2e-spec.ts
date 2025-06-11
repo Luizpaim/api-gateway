@@ -11,18 +11,23 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { PrismaClient } from '@prisma/client'
 import { instanceToPlain } from 'class-transformer'
 import request from 'supertest'
-
 import { CompaniesModule } from '@/companies/infrastructure/companies.module'
 import { BcryptjsHashProvider } from '@/users/infrastructure/providers/hash-provider/bcryptjs-hash.provider'
-import { UsersController } from '@/users/infrastructure/users.controller'
 import { UsersModule } from '@/users/infrastructure/users.module'
+import { ShortenedUrlModule } from '../../shortened-url.module'
+import { ShortenedUrlRepository } from '@/shortened-url/domain/repositories/shortened-url.repository'
+import { ShortenedUrlEntity } from '@/shortened-url/domain/entities/shortened-url.entity'
+import { ShortenedUrlDataBuilder } from '@/shortened-url/domain/testing/helpers/shortened-url-data-builder'
+import { ShortenedUrlController } from '../../shortened-url.controller'
 
-describe('UsersController e2e tests', () => {
+describe('ShortenedUrlController e2e tests', () => {
   let app: INestApplication
   let module: TestingModule
 
   let repository: UserRepository.Repository
+  let repositoryShortnedUrl: ShortenedUrlRepository.Repository
   let entity: UserEntity
+  let entityShortenedUrl: ShortenedUrlEntity
   let companyId: string
 
   const prismaService = new PrismaClient()
@@ -31,6 +36,15 @@ describe('UsersController e2e tests', () => {
   let hashPassword: string
   let accessToken: string
 
+  function generateShortCode(length = 6) {
+    const chars = '0123456789'
+    let result = ''
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return result
+  }
+
   beforeAll(async () => {
     setupPrismaTests()
     module = await Test.createTestingModule({
@@ -38,13 +52,19 @@ describe('UsersController e2e tests', () => {
         EnvConfigModule,
         UsersModule,
         CompaniesModule,
+        ShortenedUrlModule,
         DatabaseModule.forTest(prismaService),
       ],
     }).compile()
     app = module.createNestApplication()
     applyGlobalConfig(app)
     await app.init()
+
     repository = module.get<UserRepository.Repository>('UserRepository')
+    repositoryShortnedUrl = module.get<ShortenedUrlRepository.Repository>(
+      'ShortenedUrlRepository',
+    )
+
     hashProvider = new BcryptjsHashProvider()
     hashPassword = await hashProvider.generateHash('1234')
   })
@@ -57,6 +77,7 @@ describe('UsersController e2e tests', () => {
 
     await prismaService.company.deleteMany()
     await prismaService.user.deleteMany()
+    await prismaService.shortenedUrl.deleteMany()
 
     const res = await request(app.getHttpServer())
       .post('/companies')
@@ -79,39 +100,54 @@ describe('UsersController e2e tests', () => {
       .send({ email: 'a@a.com', password: '1234' })
       .expect(200)
     accessToken = loginResponse.body.accessToken
+
+    entityShortenedUrl = new ShortenedUrlEntity(
+      ShortenedUrlDataBuilder({
+        userId: entity._id,
+        companyId,
+      }),
+    )
+
+    await repositoryShortnedUrl.insert(entityShortenedUrl)
   })
 
-  describe('GET /users', () => {
-    it('should return the users ordered by createdAt', async () => {
+  describe('GET /shortened-url', () => {
+    it('should return the shortened-url ordered by createdAt', async () => {
       const createdAt = new Date()
-      const entities: UserEntity[] = []
-      const arrange = Array(3).fill(UserDataBuilder({}))
+      const entities: ShortenedUrlEntity[] = []
+      const arrange = Array(3).fill(ShortenedUrlDataBuilder({}))
       arrange.forEach((element, index) => {
         entities.push(
-          new UserEntity({
+          new ShortenedUrlEntity({
             ...element,
-            email: `a${index}@a.com`,
             companyId,
+            userId: entityShortenedUrl.userId,
+            shortCode: generateShortCode(),
             createdAt: new Date(createdAt.getTime() + index),
           }),
         )
       })
-      await prismaService.user.deleteMany()
-      await prismaService.user.createMany({
+      await prismaService.shortenedUrl.deleteMany()
+
+      await prismaService.shortenedUrl.createMany({
         data: entities.map(item => item.toJSON()),
       })
       const searchParams = {}
       const queryParams = new URLSearchParams(searchParams as any).toString()
 
       const res = await request(app.getHttpServer())
-        .get(`/users/?${queryParams}`)
+        .get(`/shortened-url/?${queryParams}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200)
       expect(Object.keys(res.body)).toStrictEqual(['data', 'meta'])
       expect(res.body).toStrictEqual({
         data: [...entities]
           .reverse()
-          .map(item => instanceToPlain(UsersController.userToResponse(item))),
+          .map(item =>
+            instanceToPlain(
+              ShortenedUrlController.shortenedUrlToResponse(item),
+            ),
+          ),
         meta: {
           total: 3,
           currentPage: 1,
@@ -121,21 +157,21 @@ describe('UsersController e2e tests', () => {
       })
     })
 
-    it('should return the users ordered by createdAt', async () => {
-      const createdAt = new Date()
-      const entities: UserEntity[] = []
+    it('should return the shortened-url ordered by createdAt', async () => {
+      const entities: ShortenedUrlEntity[] = []
       const arrange = ['test', 'a', 'TEST', 'b', 'TeSt']
       arrange.forEach((element, index) => {
         entities.push(
-          new UserEntity({
-            ...UserDataBuilder({}),
-            name: element,
-            email: `a${index}@a.com`,
+          new ShortenedUrlEntity({
+            ...ShortenedUrlDataBuilder({}),
+            shortUrl: element,
             companyId,
+            userId: entityShortenedUrl.userId,
+            shortCode: generateShortCode(),
           }),
         )
       })
-      await prismaService.user.createMany({
+      await prismaService.shortenedUrl.createMany({
         data: entities.map(item => item.toJSON()),
       })
       const searchParams = {
@@ -148,26 +184,33 @@ describe('UsersController e2e tests', () => {
       const queryParams = new URLSearchParams(searchParams as any).toString()
 
       const res = await request(app.getHttpServer())
-        .get(`/users/?${queryParams}`)
+        .get(`/shortened-url/?${queryParams}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200)
+
       expect(Object.keys(res.body)).toStrictEqual(['data', 'meta'])
-      expect(res.body).toStrictEqual({
-        data: [entities[0], entities[4]].map(item =>
-          instanceToPlain(UsersController.userToResponse(item)),
-        ),
-        meta: {
-          total: 3,
-          currentPage: 1,
-          perPage: 2,
-          lastPage: 2,
-        },
+
+      const expectedShortUrls = arrange.filter(url =>
+        url.toLowerCase().includes('test'),
+      )
+      const resultShortUrls = res.body.data.map((item: any) => item.shortUrl)
+
+      const lowerResultShortUrls = resultShortUrls.map(s => s.toLowerCase())
+      expectedShortUrls.forEach(expected => {
+        expect(lowerResultShortUrls).toContain(expected.toLowerCase())
+      })
+
+      expect(res.body.meta).toStrictEqual({
+        total: 3,
+        currentPage: 1,
+        perPage: 2,
+        lastPage: 2,
       })
     })
 
     it('should return a error with 422 code when the query params is invalid', async () => {
       const res = await request(app.getHttpServer())
-        .get('/users/?fakeId=10')
+        .get('/shortened-url/?fakeId=10')
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(422)
       expect(res.body.error).toBe('Unprocessable Entity')
@@ -176,7 +219,7 @@ describe('UsersController e2e tests', () => {
 
     it('should return a error with 401 code when the request is not authorized', async () => {
       const res = await request(app.getHttpServer())
-        .get('/users')
+        .get('/shortened-url')
         .expect(401)
         .expect({
           statusCode: 401,

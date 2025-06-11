@@ -24,7 +24,7 @@ import { ShortenedUrlRepository } from '@/shortened-url/domain/repositories/shor
 import { ShortenedUrlEntity } from '@/shortened-url/domain/entities/shortened-url.entity'
 import { ShortenedUrlDataBuilder } from '@/shortened-url/domain/testing/helpers/shortened-url-data-builder'
 
-describe('UsersController e2e tests', () => {
+describe('ShortenedUrlController e2e tests', () => {
   let app: INestApplication
   let module: TestingModule
 

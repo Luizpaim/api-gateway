@@ -9,7 +9,7 @@ import { Prisma } from '@prisma/client'
 export class ShortenedUrlPrismaRepository
   implements ShortenedUrlRepository.Repository
 {
-  sortableFields: string[] = ['name', 'createdAt']
+  sortableFields: string[] = ['shortUrl', 'createdAt']
 
   constructor(private prismaService: PrismaService) {}
 
@@ -116,10 +116,10 @@ export class ShortenedUrlPrismaRepository
     userId: string
   }): Promise<ShortenedUrlEntity> {
     try {
-      const user = await this.prismaService.shortenedUrl.findUnique({
+      const shortenedUrl = await this.prismaService.shortenedUrl.findUnique({
         where: { id, companyId, userId, deletedAt: null },
       })
-      return ShortenedUrlModelMapper.toEntity(user)
+      return ShortenedUrlModelMapper.toEntity(shortenedUrl)
     } catch {
       throw new NotFoundError(`ShortenedUrlModel not found using ID ${id}`)
     }

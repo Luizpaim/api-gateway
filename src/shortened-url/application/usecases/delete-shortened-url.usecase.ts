@@ -1,6 +1,5 @@
 import { ShortenedUrlShlinkProvider } from '@/shared/application/providers/shortened-url-shlink.provider'
 import { UseCase as DefaultUseCase } from '@/shared/application/usecases/use-case'
-import { NotFoundError } from '@/shared/domain/errors/not-found-error'
 import { ShortenedUrlRepository } from '@/shortened-url/domain/repositories/shortened-url.repository'
 
 export namespace DeleteShortenedUrlUseCase {

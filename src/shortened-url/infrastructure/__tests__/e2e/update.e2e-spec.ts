@@ -11,21 +11,26 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { PrismaClient } from '@prisma/client'
 import { instanceToPlain } from 'class-transformer'
 import request from 'supertest'
-
 import { CompaniesModule } from '@/companies/infrastructure/companies.module'
-import { UpdateUserDto } from '@/users/infrastructure/dtos/update-user.dto'
 import { BcryptjsHashProvider } from '@/users/infrastructure/providers/hash-provider/bcryptjs-hash.provider'
-import { UsersController } from '@/users/infrastructure/users.controller'
 import { UsersModule } from '@/users/infrastructure/users.module'
+import { ShortenedUrlEntity } from '@/shortened-url/domain/entities/shortened-url.entity'
+import { ShortenedUrlRepository } from '@/shortened-url/domain/repositories/shortened-url.repository'
+import { UpdateShortenedUrlDto } from '../../dtos/update-shortened-url.dto'
+import { ShortenedUrlModule } from '../../shortened-url.module'
+import { ShortenedUrlDataBuilder } from '@/shortened-url/domain/testing/helpers/shortened-url-data-builder'
+import { ShortenedUrlController } from '../../shortened-url.controller'
 
 describe('UsersController e2e tests', () => {
   let app: INestApplication
   let module: TestingModule
-
   let repository: UserRepository.Repository
-  let updateUserDto: UpdateUserDto
+  let repositoryShortnedUrl: ShortenedUrlRepository.Repository
+  let updateShortenedUrlDto: UpdateShortenedUrlDto
   let entity: UserEntity
+  let entityShortenedUrl: ShortenedUrlEntity
   let companyId: string
+  let resShortenedUrl: Record<string, any>
 
   const prismaService = new PrismaClient()
 
@@ -38,23 +43,22 @@ describe('UsersController e2e tests', () => {
     module = await Test.createTestingModule({
       imports: [
         EnvConfigModule,
+        ShortenedUrlModule,
         UsersModule,
         CompaniesModule,
         DatabaseModule.forTest(prismaService),
       ],
-    })
-      .overrideProvider('WebsocketProvider')
-      .useValue({
-        sendMessage: jest.fn(),
-        handleConnection: jest.fn(),
-        handleDisconnect: jest.fn(),
-        broadcastPublicMessage: jest.fn(),
-      })
-      .compile()
+    }).compile()
+
     app = module.createNestApplication()
     applyGlobalConfig(app)
     await app.init()
+
     repository = module.get<UserRepository.Repository>('UserRepository')
+    repositoryShortnedUrl = module.get<ShortenedUrlRepository.Repository>(
+      'ShortenedUrlRepository',
+    )
+
     hashProvider = new BcryptjsHashProvider()
     hashPassword = await hashProvider.generateHash('1234')
   })
@@ -67,6 +71,7 @@ describe('UsersController e2e tests', () => {
 
     await prismaService.company.deleteMany()
     await prismaService.user.deleteMany()
+    await prismaService.shortenedUrl.deleteMany()
 
     const res = await request(app.getHttpServer())
       .post('/companies')
@@ -75,8 +80,8 @@ describe('UsersController e2e tests', () => {
 
     companyId = res.body.data.id
 
-    updateUserDto = {
-      name: 'test name',
+    updateShortenedUrlDto = {
+      longUrl: 'https://quasar.dev/vue-components/table#responsive-tables',
     }
 
     entity = new UserEntity(
@@ -94,56 +99,79 @@ describe('UsersController e2e tests', () => {
       .expect(200)
 
     accessToken = loginResponse.body.accessToken
+
+    entityShortenedUrl = new ShortenedUrlEntity(
+      ShortenedUrlDataBuilder({
+        userId: entity._id,
+        companyId,
+      }),
+    )
+
+    await repositoryShortnedUrl.insert(entityShortenedUrl)
   })
 
-  describe('PUT /users/:id', () => {
-    it('should update a user', async () => {
-      updateUserDto.name = 'test name'
-      const res = await request(app.getHttpServer())
-        .put(`/users/${entity._id}`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send(updateUserDto)
-        .expect(200)
-      const user = await repository.findById(entity._id)
-      const presenter = UsersController.userToResponse(user.toJSON())
-      const serialized = instanceToPlain(presenter)
-      expect(res.body.data).toStrictEqual(serialized)
-    })
-
+  describe('PUT /shortened-url/:id', () => {
     it('should return a error with 422 code when the request body is invalid', async () => {
       const res = await request(app.getHttpServer())
-        .put(`/users/${entity._id}`)
+        .put(`/shortened-url/${entity._id}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({})
         .expect(422)
       expect(res.body.error).toBe('Unprocessable Entity')
       expect(res.body.message).toEqual([
-        'name should not be empty',
-        'name must be a string',
+        'longUrl should not be empty',
+        'longUrl must be a URL address',
       ])
     })
 
     it('should return a error with 404 code when throw NotFoundError with invalid id', async () => {
       const res = await request(app.getHttpServer())
-        .put('/users/fakeId')
+        .put('/shortened-url/fakeId')
         .set('Authorization', `Bearer ${accessToken}`)
-        .send(updateUserDto)
+        .send(updateShortenedUrlDto)
         .expect(404)
         .expect({
           statusCode: 404,
           error: 'Not Found',
-          message: 'UserModel not found using ID fakeId',
+          message: 'ShortenedUrlModel not found using ID fakeId',
         })
     })
 
     it('should return a error with 401 code when the request is not authorized', async () => {
       const res = await request(app.getHttpServer())
-        .put('/users/fakeId')
+        .put('/shortened-url/fakeId')
         .expect(401)
         .expect({
           statusCode: 401,
           message: 'Unauthorized',
         })
+    })
+
+    it('should update a shortened-url', async () => {
+      resShortenedUrl = await request(app.getHttpServer())
+        .post('/shortened-url')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          longUrl: 'https://longurl.com/teste',
+        })
+        .expect(201)
+
+      updateShortenedUrlDto.longUrl =
+        'https://quasar.dev/vue-components/table#responsive-tables'
+      const res = await request(app.getHttpServer())
+        .put(`/shortened-url/${resShortenedUrl.body.data.id}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send(updateShortenedUrlDto)
+        .expect(200)
+
+      const shortenedUrl = await repositoryShortnedUrl.findById(
+        resShortenedUrl.body.data.id,
+      )
+      const presenter = ShortenedUrlController.shortenedUrlToResponse(
+        shortenedUrl.toJSON(),
+      )
+      const serialized = instanceToPlain(presenter)
+      expect(res.body.data).toStrictEqual(serialized)
     })
   })
 })
